@@ -1,6 +1,8 @@
+import time
+
 from openai import OpenAI
 
-from docker_api import VM
+from docker_api import VM, docker_exec
 
 
 class Agent:
@@ -16,6 +18,9 @@ class Agent:
         response = self.openai_api_request()
         print(response.output)
         return response
+
+    def docker_exec(self, command):
+        docker_exec(f'DISPLAY={self.vm.display} ' + command, self.vm.container_name)
 
     def openai_api_request(self):
         return self.client.responses.create(
@@ -43,7 +48,7 @@ class Agent:
             truncation="auto"
         )
 
-    def handle_model_action(self, vm, action):
+    def handle_model_action(self, action):
         """
         Given a computer action (e.g., click, double_click, scroll, etc.),
         execute the corresponding operation on the Docker environment.
@@ -58,20 +63,20 @@ class Agent:
                     button_map = {"left": 1, "middle": 2, "right": 3}
                     b = button_map.get(action.button, 1)
                     print(f"Action: click at ({x}, {y}) with button '{action.button}'")
-                    docker_exec(f"DISPLAY={vm.display} xdotool mousemove {x} {y} click {b}", vm.container_name)
+                    self.docker_exec(f"xdotool mousemove {x} {y} click {b}")
 
                 case "scroll":
                     x, y = int(action.x), int(action.y)
                     scroll_x, scroll_y = int(action.scroll_x), int(action.scroll_y)
                     print(f"Action: scroll at ({x}, {y}) with offsets (scroll_x={scroll_x}, scroll_y={scroll_y})")
-                    docker_exec(f"DISPLAY={vm.display} xdotool mousemove {x} {y}", vm.container_name)
+                    self.docker_exec(f"xdotool mousemove {x} {y}")
 
                     # For vertical scrolling, use button 4 (scroll up) or button 5 (scroll down)
                     if scroll_y != 0:
                         button = 4 if scroll_y < 0 else 5
                         clicks = abs(scroll_y)
                         for _ in range(clicks):
-                            docker_exec(f"DISPLAY={vm.display} xdotool click {button}", vm.container_name)
+                            self.docker_exec(f"xdotool click {button}")
 
                 case "keypress":
                     keys = action.keys
@@ -79,16 +84,16 @@ class Agent:
                         print(f"Action: keypress '{k}'")
                         # A simple mapping for common keys; expand as needed.
                         if k.lower() == "enter":
-                            docker_exec(f"DISPLAY={vm.display} xdotool key 'Return'", vm.container_name)
+                            self.docker_exec(f"xdotool key 'Return'")
                         elif k.lower() == "space":
-                            docker_exec(f"DISPLAY={vm.display} xdotool key 'space'", vm.container_name)
+                            self.docker_exec(f"xdotool key 'space'")
                         else:
-                            docker_exec(f"DISPLAY={vm.display} xdotool key '{k}'", vm.container_name)
+                            self.docker_exec(f"xdotool key '{k}'")
 
                 case "type":
                     text = action.text
                     print(f"Action: type text: {text}")
-                    docker_exec(f"DISPLAY={vm.display} xdotool type '{text}'", vm.container_name)
+                    self.docker_exec(f"xdotool type '{text}'")
 
                 case "wait":
                     print(f"Action: wait")

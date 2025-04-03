@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import Mock
 
 from agent.paperclip_agent import Agent
 from test.resources import example_response
