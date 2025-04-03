@@ -1,15 +1,12 @@
-from typing import Union
-
 from fastapi import FastAPI
+
+from browser_api.shell_command import ShellCommand
 
 app = FastAPI()
 
 with open('/run/secrets/browser_automation_api_key', 'r') as file:
     API_KEY = file.read().strip()
 
-SHELL_WHITELIST = [
-    'echo',
-]
 
 @app.get("/check_key/{api_key}")
 def validate_api_key(api_key: str):
@@ -19,13 +16,16 @@ def validate_api_key(api_key: str):
 
 
 @app.post("/execute_command/{api_key}")
-def shell_command(api_key: str, command: str):
+def shell_command(api_key: str, cmd: ShellCommand):
     """
     Execute a shell command and return the output.
     """
-    import subprocess
-    try:
-        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
-        return {"output": result.stdout}
-    except subprocess.CalledProcessError as e:
-        return {"error": e.stderr}
+    if api_key != API_KEY:
+        return {"error": "Invalid API key"}
+    result = cmd.execute()
+    return {
+        'stdout': result.stdout,
+        'stderr': result.stderr,
+        'return_code': result.returncode,
+    }
+

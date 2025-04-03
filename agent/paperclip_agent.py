@@ -1,12 +1,13 @@
 import time
+from typing import Optional
 
 from openai import OpenAI
 
-from docker_api import VM, docker_exec
+from browser_automation_client import VM, docker_exec
 
 
 class Agent:
-    def __init__(self, vm=None, client=None):
+    def __init__(self, vm: Optional[VM]=None, client=None):
         if vm is None:
             vm = VM.create()
         if client is None:

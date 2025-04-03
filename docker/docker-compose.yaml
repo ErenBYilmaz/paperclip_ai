@@ -18,6 +18,8 @@ services:
       - src:/code
     secrets:
       - browser_automation_api_key
+    networks:
+      - browser_automation_network
     command: >
       /bin/sh -c "
       Xvfb host.docker.internal:0.0 -screen 0 1280x800x24 >/dev/null 2>&1 & 
@@ -46,6 +48,8 @@ services:
       - src:/code
     secrets:
       - browser_automation_api_key
+    networks:
+      - browser_automation_network
     command: /bin/sh -c "export DISPLAY=host.docker.internal:0.0 && /opt/conda/bin/python3 /code/main.py"
     deploy:
       resources:
@@ -67,3 +71,8 @@ secrets:
     file: ./secrets/vnc_password.txt
   browser_automation_api_key:
     file: ./secrets/browser_automation_api_key.txt
+networks:
+  browser_automation_network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
