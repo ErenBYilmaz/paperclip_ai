@@ -3,7 +3,7 @@ from typing import Optional
 
 from openai import OpenAI
 
-from browser_automation_client import VM, docker_exec
+from browser_automation_client import VM
 
 
 class Agent:
@@ -23,16 +23,11 @@ class Agent:
     def docker_exec(self, command):
         return self.vm.docker_exec(f'DISPLAY={self.vm.display} ' + command)
 
-    # def get_screenshot(vm):
-    #     """
-    #     Takes a screenshot, returning raw bytes.
-    #     """
-    #     cmd = (
-    #         f"export DISPLAY={vm.display} && "
-    #         "import -window root png:-"
-    #     )
-    #     screenshot_bytes = docker_exec(cmd, vm.container_name, decode=False)
-    #     return screenshot_bytes
+    def get_screenshot(self):
+        """
+        Takes a screenshot, returning raw bytes.
+        """
+        return self.vm.screenshot()
 
     def openai_api_request(self):
         return self.client.responses.create(
