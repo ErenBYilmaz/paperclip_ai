@@ -4,7 +4,7 @@ import subprocess
 
 def docker_exec(cmd: str, container_name: str, decode=True) -> str:
     safe_cmd = cmd.replace('"', '\"')
-    docker_cmd = f'docker exec {container_name} sh -c "{safe_cmd}"'
+    docker_cmd = f'docker exec {container_name} /bin/sh -c "{safe_cmd}"'
     output = subprocess.check_output(docker_cmd, shell=True)
     if decode:
         return output.decode("utf-8", errors="ignore")
