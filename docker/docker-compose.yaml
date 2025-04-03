@@ -1,3 +1,4 @@
+name: paperclip_ai
 services:
   paperclip_vm:
     build:
@@ -9,6 +10,7 @@ services:
     container_name: paperclip_vm
     environment:
       VNC_PASSWORD_FILE: /run/secrets/vnc_password
+      DISPLAY: host.docker.internal:0.0
     ports:
       - "5900:5900"
       - "8000:8000"
@@ -22,6 +24,7 @@ services:
       x11vnc -display host.docker.internal:0.0 -forever -rfbauth /home/myuser/.vncpass -listen 0.0.0.0 -rfbport 5900 >/dev/null 2>&1 & 
       export DISPLAY=host.docker.internal:0.0 && 
       startxfce4 >/dev/null 2>&1 & 
+      sleep 2 && firefox-esr & 
       python -m fastapi dev browser_automation_api.py --port 8000 --host 0.0.0.0 &
       sleep 2 && echo 'Container running!' && 
       tail -f /dev/null
