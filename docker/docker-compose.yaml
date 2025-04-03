@@ -1,0 +1,48 @@
+services:
+  paperclip_vm:
+    build:
+      context: .
+      dockerfile: DockerfileVM
+    image: paperclip_vm
+    container_name: paperclip_vm
+    ports:
+      - "5900:5900"
+    command: >
+      /bin/sh -c "
+      Xvfb host.docker.internal:0.0 -screen 0 1280x800x24 >/dev/null 2>&1 & 
+      x11vnc -display host.docker.internal:0.0 -forever -rfbauth /home/myuser/.vncpass -listen 0.0.0.0 -rfbport 5900 >/dev/null 2>&1 & 
+      export DISPLAY=host.docker.internal:0.0 && 
+      startxfce4 >/dev/null 2>&1 & 
+      sleep 2 && echo 'Container running!' && 
+      tail -f /dev/null
+      "
+
+  paperclip_ai:
+    build:
+      context: .
+      dockerfile: DockerfilePython
+      args:
+        USER_ID: 197609
+        GROUP_ID: 197121
+        USERNAME: eren
+    image: eren_container_paperclip_ai
+    container_name: eren_container_paperclip_ai
+    user: "197609:197121"
+    ipc: host
+    volumes:
+      - src:/code
+    command: /bin/sh -c "export DISPLAY=host.docker.internal:0.0 && /opt/conda/bin/python3 /code/main.py"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+volumes:
+    src:
+        driver: local
+        driver_opts:
+            type: none
+            device: ..
+            o: bind
