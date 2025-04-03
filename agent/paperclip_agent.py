@@ -22,6 +22,17 @@ class Agent:
     def docker_exec(self, command):
         docker_exec(f'DISPLAY={self.vm.display} ' + command, self.vm.container_name)
 
+    # def get_screenshot(vm):
+    #     """
+    #     Takes a screenshot, returning raw bytes.
+    #     """
+    #     cmd = (
+    #         f"export DISPLAY={vm.display} && "
+    #         "import -window root png:-"
+    #     )
+    #     screenshot_bytes = docker_exec(cmd, vm.container_name, decode=False)
+    #     return screenshot_bytes
+
     def openai_api_request(self):
         return self.client.responses.create(
             model="computer-use-preview",
