@@ -3,16 +3,23 @@ services:
     build:
       context: .
       dockerfile: DockerfileVM
+      secrets:
+        - vnc_password
     image: paperclip_vm
     container_name: paperclip_vm
+    environment:
+      VNC_PASSWORD_FILE: /run/secrets/vnc_password
     ports:
       - "5900:5900"
+    volumes:
+      - src:/code
     command: >
       /bin/sh -c "
       Xvfb host.docker.internal:0.0 -screen 0 1280x800x24 >/dev/null 2>&1 & 
       x11vnc -display host.docker.internal:0.0 -forever -rfbauth /home/myuser/.vncpass -listen 0.0.0.0 -rfbport 5900 >/dev/null 2>&1 & 
       export DISPLAY=host.docker.internal:0.0 && 
       startxfce4 >/dev/null 2>&1 & 
+      python -m fastapi dev browser_automation_api.py &
       sleep 2 && echo 'Container running!' && 
       tail -f /dev/null
       "
@@ -46,3 +53,7 @@ volumes:
             type: none
             device: ..
             o: bind
+
+secrets:
+  vnc_password:
+    file: ./secrets/vnc_password.txt

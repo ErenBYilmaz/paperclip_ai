@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 1) Install Xfce, x11vnc, Xvfb, xdotool, etc., but remove any screen lockers or power managers
-RUN apt-get update && apt-get install -y xfce4 xfce4-goodies x11vnc xvfb xdotool imagemagick x11-apps sudo software-properties-common imagemagick curl git unzip graphviz nano ffmpeg libsm6 libxext6 && apt-get remove -y light-locker xfce4-screensaver xfce4-power-manager || true  && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y xfce4 xfce4-goodies x11vnc xvfb xdotool imagemagick x11-apps sudo software-properties-common imagemagick curl git unzip graphviz nano ffmpeg libsm6 libxext6 python3 python3-pip python-is-python3 && apt-get remove -y light-locker xfce4-screensaver xfce4-power-manager || true  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2) Add the mozillateam PPA and install Firefox ESR
 RUN add-apt-repository ppa:mozillateam/ppa  && apt-get update  && apt-get install -y --no-install-recommends firefox-esr  && update-alternatives --set x-www-browser /usr/bin/firefox-esr  && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -10,10 +10,15 @@ RUN add-apt-repository ppa:mozillateam/ppa  && apt-get update  && apt-get instal
 # 3) Create non-root user
 RUN useradd -ms /bin/bash myuser     && echo "myuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 USER myuser
-WORKDIR /home/myuser
+USER root
+RUN --mount=type=secret,id=vnc_password \
+    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /home/myuser/.vncpass
+USER myuser
 
-# 4) Set x11vnc password ("secret")
-RUN x11vnc -storepasswd secret /home/myuser/.vncpass
+RUN pip install --upgrade pip
+RUN pip install fastapi[standard] fastapi-cli uvicorn
+
+WORKDIR /code
 
 # 5) Expose port 5900 and run Xvfb, x11vnc, Xfce (no login manager)
 EXPOSE 5900

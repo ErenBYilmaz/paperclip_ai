@@ -20,7 +20,7 @@ class Agent:
         return response
 
     def docker_exec(self, command):
-        return docker_exec(f'DISPLAY={self.vm.display} ' + command, self.vm.container_name)
+        return self.vm.docker_exec(f'DISPLAY={self.vm.display} ' + command)
 
     # def get_screenshot(vm):
     #     """

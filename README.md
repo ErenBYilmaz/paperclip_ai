@@ -6,10 +6,11 @@ The goal is to have an LLM-based AI Agent that plays the game of [Universal Pape
 
 ## Basic Setup
 
-1. Install docker desktop
-2. Build image and run container
-```
-docker compose build
-docker compose up
-```
-3. (needed on windows): install [VcXsrv](https://sourceforge.net/projects/vcxsrv/) and start it (default settings should work)
+1. Install docker (docker desktop on windows)
+2. Copy `docker/secrets_template` to `docker/secrets` and add some random passwords to the `.txt` files inside
+3. Build image and run container
+    ```
+    docker compose build
+    docker compose up
+    ```
+4. (needed on windows): install [VcXsrv](https://sourceforge.net/projects/vcxsrv/) and start it ("One large window" setting recommended)

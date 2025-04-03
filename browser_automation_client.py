@@ -19,3 +19,6 @@ class VM:
     @staticmethod
     def create():
         return VM(display=os.environ['DISPLAY'], container_name="paperclip_vm")
+
+    def docker_exec(self, cmd: str, decode=True) -> str:
+        return docker_exec(cmd, self.container_name, decode=decode)
