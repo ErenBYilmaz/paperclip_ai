@@ -1,12 +1,13 @@
 import asyncio
 import json
 import os.path
+from typing import List
 
 from agents.mcp import MCPServerStdio, MCPServerSse
 
 
 class MCPServerStack:
-    def __init__(self, mcp_servers):
+    def __init__(self, mcp_servers: List[MCPServerSse | MCPServerStdio]):
         self.mcp_servers = mcp_servers
 
     async def __aenter__(self):
@@ -41,9 +42,9 @@ class MCPServerStack:
         mcp_servers = []
         for name, config in mcp_config['mcpServers'].items():
             if "command" in config:
-                mcp_servers.append(MCPServerStdio(params=config))
+                mcp_servers.append(MCPServerStdio(params=config, name=name))
             elif "url" in config:
-                mcp_servers.append(MCPServerSse(params=config))
+                mcp_servers.append(MCPServerSse(params=config, name=name))
             else:
                 raise ValueError(f"Unknown MCP server configuration: {name}")
         stack = MCPServerStack(mcp_servers)

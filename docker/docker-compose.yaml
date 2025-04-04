@@ -12,6 +12,9 @@ services:
         - vnc_password
     image: eren_container_paperclip_ai
     container_name: eren_container_paperclip_ai
+    environment:
+      VNC_PASSWORD_FILE: /run/secrets/vnc_password
+      DISPLAY: host.docker.internal:0.0
     user: "197609:197121"
     ipc: host
     volumes:

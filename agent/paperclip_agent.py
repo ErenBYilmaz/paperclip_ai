@@ -30,7 +30,16 @@ class Agent:
         )
 
     def run(self, prompt: str):
-        return asyncio.run(Runner.run(self.openai_agent, prompt))
+        print('Running agent with prompt:', prompt)
+        return asyncio.run(self.arun(prompt))
+
+    async def arun(self, prompt: str):
+        print('Starting mcp servers...')
+        async with self.mcp_server_stack:
+            print('servers running')
+            result = await Runner.run(self.openai_agent, prompt)
+        await asyncio.sleep(0.2)
+        return result
 
     def tools(self):
         return asyncio.run(self.mcp_server_stack.list_available_mcp_tools())
