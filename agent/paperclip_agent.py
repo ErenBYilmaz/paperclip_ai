@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import io
 import json
@@ -6,52 +7,39 @@ import time
 from typing import Optional, Union
 
 import PIL.Image
+import agents
 import numpy
-from openai import OpenAI
+from agents import Runner
 from typing_extensions import Buffer
 
 from browser_automation_client import VM
 
 
-def get_openai_api_key():
-    if 'OPENAI_API_KEY' in os.environ:
-        return os.environ['OPENAI_API_KEY']
-    with open('/run/secrets/openai_config', 'r') as f:
-        data = json.load(f)
-        return data['OPENAI_API_KEY']
-
-def get_openai_organization_id():
-    if 'OPENAI_ORGANIZATION_ID' in os.environ:
-        return os.environ['OPENAI_ORGANIZATION_ID']
-    with open('/run/secrets/openai_config', 'r') as f:
-        data = json.load(f)
-        return data['OPENAI_ORGANIZATION_ID']
-
-def get_openai_project_id():
-    if 'OPENAI_PROJECT_ID' in os.environ:
-        return os.environ['OPENAI_PROJECT_ID']
-    with open('/run/secrets/openai_config', 'r') as f:
-        data = json.load(f)
-        return data['OPENAI_PROJECT_ID']
-
+def load_openai_environment_variables():
+    for k in ['OPENAI_API_KEY', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID']:
+        if k not in os.environ:
+            with open('/run/secrets/openai_config', 'r') as f:
+                data = json.load(f)
+                os.environ[k] = data[k]
 
 
 class Agent:
-    def __init__(self, vm: Optional[VM] = None, client=None, model="computer-use-preview"):
+    def __init__(self, vm: Optional[VM] = None, mcp_servers=None):
         if vm is None:
             vm = VM.create()
-        if client is None:
-            client = OpenAI(api_key=get_openai_api_key(),
-                            project=get_openai_project_id(),
-                            organization=get_openai_organization_id())
-        self.client = client
-        self.model = model
+        load_openai_environment_variables()
+        if mcp_servers is None:
+            mcp_servers = []
+        self.mcp_servers = mcp_servers
+        self.openai_agent = agents.Agent(
+            name='Assistant',
+            instructions="You are a helpful assistant. You will be given a series of tasks to perform. ",
+            mcp_servers=self.mcp_servers,
+        )
         self.vm = vm
 
-    def get_initial_response(self):
-        response = self.openai_api_request()
-        print(response.output)
-        return response
+    def run(self, prompt: str):
+        return asyncio.run(Runner.run(self.openai_agent, prompt))
 
     def docker_exec(self, command):
         return self.vm.docker_exec(f'DISPLAY={self.vm.display} ' + command)

@@ -11,7 +11,7 @@ from agent.paperclip_agent import Agent
 
 class TestDockerAPI(unittest.TestCase):
     def setUp(self):
-        self.a: Agent = Agent(client='no_client')
+        self.a: Agent = Agent()
 
     def test_initial_response(self):
         response = self.a.docker_exec('echo $DISPLAY')

@@ -8,7 +8,7 @@ from test.resources import example_response, example_screenshot_response
 
 
 def mocked_agent():
-    a = Agent(client='no_client')
+    a = Agent()
     example_request_mock = Mock()
     example_request_mock.return_value.output = example_response
     example_screenshot_mock = Mock()
@@ -22,9 +22,10 @@ class TestAgent(unittest.TestCase):
     def setUp(self):
         self.a = mocked_agent()
 
-    def test_initial_response(self):
-        r = self.a.get_initial_response()
-        self.assertEqual(r.output, example_response)
+    def test_saying_hello(self):
+        r = self.a.run('Hello')
+        assert isinstance(r.final_output, str)
+        print(r.final_output)
 
     def test_encode_decode_screenshot(self):
         image_data_b64 = self.a.get_screenshot()['image_data']
