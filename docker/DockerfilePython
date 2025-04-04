@@ -51,6 +51,7 @@ ENV PATH="/home/$USERNAME/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 USER root
 RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 USER $USERNAME
+EXPOSE 5900 # VNC
 
 
 WORKDIR /code

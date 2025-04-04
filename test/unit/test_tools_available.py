@@ -1,5 +1,5 @@
 import asyncio
-import time
+import os
 import unittest
 
 from agent.paperclip_agent import Agent
@@ -12,6 +12,9 @@ class TestTools(unittest.TestCase):
         assert any(tool.name.startswith('puppeteer') for tool in tools), "No puppeteer tools available"
 
     def test_navigate(self):
+        print()
+        print(os.environ['DISPLAY'])
+        assert os.environ['DISPLAY'] == 'host.docker.internal:0.0'
         a = Agent()
         servers = a.mcp_server_stack.mcp_servers
         print([server.name for server in servers])
@@ -22,6 +25,7 @@ class TestTools(unittest.TestCase):
         async def call():
             async with server:
                 await server.call_tool('puppeteer_navigate', {"url": "https://www.example.com"})
+                await asyncio.sleep(10)
+            await asyncio.sleep(1)
 
         asyncio.run(call())
-        time.sleep(10)
