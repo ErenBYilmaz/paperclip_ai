@@ -7,17 +7,6 @@ class TestOpenAIRequest(unittest.TestCase):
     def setUp(self):
         self.a = Agent()
 
-    def test_openai_request(self):
-        a = Agent()
-        r = a.get_initial_response()
-        print(r)
-
-    def test_list_models(self):
-        a = Agent()
-        models = a.client.models.list()
-        assert any(model.id.startswith(a.model) for model in models)
-        print([model.id for model in models])
-
     def test_saying_hello(self):
         r = self.a.run('Hello')
         assert isinstance(r.final_output, str)

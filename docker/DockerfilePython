@@ -39,6 +39,7 @@ RUN --mount=type=secret,id=vnc_password \
     x11vnc -storepasswd $(cat /run/secrets/vnc_password) /home/$USERNAME/.vncpass
 USER $USERNAME
 
+# install nodejs
 ENV NODE_VERSION=22.14.0
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
 ENV NVM_DIR=/home/$USERNAME/.nvm

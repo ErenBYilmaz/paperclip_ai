@@ -1,9 +1,22 @@
 import asyncio
 import json
 import os.path
-import sys
 
 from agents.mcp import MCPServerStdio, MCPServerSse
+
+
+class MCPServerStack:
+    def __init__(self, mcp_servers):
+        self.mcp_servers = mcp_servers
+
+    async def __aenter__(self):
+        for server in self.mcp_servers:
+            await server.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        for server in self.mcp_servers:
+            await server.__aexit__(exc_type, exc_val, exc_tb)
 
 
 async def mcp_servers_from_config(mcp_config):
@@ -30,8 +43,6 @@ async def mcp_servers_from_config(mcp_config):
 def main():
     with open(os.path.join(os.path.dirname(__file__), 'mcp.json'), 'r') as f:
         mcp_config = json.load(f)
-    if sys.platform.startswith('win'):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(mcp_servers_from_config(mcp_config))
 
 
