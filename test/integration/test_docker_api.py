@@ -7,12 +7,11 @@ import PIL.Image
 import numpy
 
 from agent.paperclip_agent import Agent
-from test.unit.test_agent import mocked_agent
 
 
 class TestDockerAPI(unittest.TestCase):
     def setUp(self):
-        self.a: Agent = mocked_agent()
+        self.a: Agent = Agent(client='no_client')
 
     def test_initial_response(self):
         response = self.a.docker_exec('echo $DISPLAY')
@@ -29,7 +28,7 @@ class TestDockerAPI(unittest.TestCase):
         self.assertIsInstance(decoded, bytes)
         img = PIL.Image.open(io.BytesIO(decoded))
         array = numpy.array(img)
-        black_ratio = numpy.count_nonzero(array == 0) / array.size
-        assert black_ratio < 0.2
         os.makedirs('logs', exist_ok=True)
         img.save('logs/test_screenshot.png')
+        black_ratio = numpy.count_nonzero(array == 0) / array.size
+        assert black_ratio < 0.2
