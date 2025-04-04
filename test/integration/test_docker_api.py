@@ -4,30 +4,33 @@ import os
 import unittest
 
 import PIL.Image
+import numpy
 
+from agent.paperclip_agent import Agent
 from test.unit.test_agent import mocked_agent
 
 
 class TestDockerAPI(unittest.TestCase):
     def setUp(self):
-        self.a = mocked_agent()
+        self.a: Agent = mocked_agent()
 
     def test_initial_response(self):
         response = self.a.docker_exec('echo $DISPLAY')
         self.assertEqual({'stdout': 'host.docker.internal:0.0\n', 'stderr': '', 'return_code': 0}, response)
 
-    def test_clicking_somewhere(self):
+    def test_clicking_into_the_address_bar(self):
         response = self.a.docker_exec('DISPLAY=host.docker.internal:0.0 xdotool mousemove 300 120 click 1')
         print(response)
         self.assertEqual(response['return_code'], 0)
 
-    def test_getting_screenshot(self):
-        response = self.a.get_screenshot()
-        image_data_b64 = response['image_data']
+    def test_screenshot(self):
+        image_data_b64 = self.a.get_screenshot()['image_data']
         self.assertIsInstance(image_data_b64, str)
         decoded = base64.b64decode(image_data_b64)
         self.assertIsInstance(decoded, bytes)
         img = PIL.Image.open(io.BytesIO(decoded))
+        array = numpy.array(img)
+        black_ratio = numpy.count_nonzero(array == 0) / array.size
+        assert black_ratio < 0.2
         os.makedirs('logs', exist_ok=True)
         img.save('logs/test_screenshot.png')
-

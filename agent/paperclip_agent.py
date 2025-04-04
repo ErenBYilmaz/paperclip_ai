@@ -1,13 +1,18 @@
+import base64
+import io
 import time
-from typing import Optional
+from typing import Optional, Union
 
+import PIL.Image
+import numpy
 from openai import OpenAI
+from typing_extensions import Buffer
 
 from browser_automation_client import VM
 
 
 class Agent:
-    def __init__(self, vm: Optional[VM]=None, client=None):
+    def __init__(self, vm: Optional[VM] = None, client=None):
         if vm is None:
             vm = VM.create()
         if client is None:
@@ -29,7 +34,27 @@ class Agent:
         """
         return self.vm.screenshot()
 
+    def cropped_screenshot(self) -> PIL.Image:
+        response = self.get_screenshot()
+        array = self.base64_to_img(response['image_data'])
+        all_black_rows = numpy.all(array == 0, axis=(0, -1))
+        all_black_columns = numpy.all(array == 0, axis=(1, -1))
+        array = array[~all_black_columns][:, ~all_black_rows]
+        return array
+
+    def img_to_base64(self, a: Union[numpy.ndarray | Buffer]):
+        buffer = io.BytesIO()
+        PIL.Image.fromarray(a).save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue())
+
+    def base64_to_img(self, image_data_b64: str | Buffer) -> numpy.ndarray:
+        decoded = base64.b64decode(image_data_b64)
+        img = PIL.Image.open(io.BytesIO(decoded))
+        array = numpy.array(img)
+        return array
+
     def openai_api_request(self):
+        screenshot_base64 = self.get_screenshot()['image_data']
         return self.client.responses.create(
             model="computer-use-preview",
             tools=[{
@@ -42,12 +67,11 @@ class Agent:
                 {
                     "role": "user",
                     "content": "Check the latest OpenAI news on bing.com."
+                },
+                {
+                    "type": "input_image",
+                    "image_url": f"data:image/png;base64,{screenshot_base64}"
                 }
-                # Optional: include a screenshot of the initial state of the environment
-                # {
-                #     type: "input_image",
-                #     image_url: f"data:image/png;base64,{screenshot_base64}"
-                # }
             ],
             reasoning={
                 "generate_summary": "concise",

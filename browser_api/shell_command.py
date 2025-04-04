@@ -10,5 +10,5 @@ class ShellCommand(BaseModel):
     """
     command: str
 
-    def execute(self, decode: bool) -> CompletedProcess[str]:
+    def execute(self, decode=True) -> CompletedProcess[str]:
         return subprocess.run(self.command, shell=True, capture_output=True, text=decode)
