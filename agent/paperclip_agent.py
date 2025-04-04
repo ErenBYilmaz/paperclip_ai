@@ -1,5 +1,7 @@
 import base64
 import io
+import json
+import os
 import time
 from typing import Optional, Union
 
@@ -11,12 +13,37 @@ from typing_extensions import Buffer
 from browser_automation_client import VM
 
 
+def get_openai_api_key():
+    if 'OPENAI_API_KEY' in os.environ:
+        return os.environ['OPENAI_API_KEY']
+    with open('/run/secrets/openai_config', 'r') as f:
+        data = json.load(f)
+        return data['OPENAI_API_KEY']
+
+def get_openai_organization_id():
+    if 'OPENAI_ORGANIZATION_ID' in os.environ:
+        return os.environ['OPENAI_ORGANIZATION_ID']
+    with open('/run/secrets/openai_config', 'r') as f:
+        data = json.load(f)
+        return data['OPENAI_ORGANIZATION_ID']
+
+def get_openai_project_id():
+    if 'OPENAI_PROJECT_ID' in os.environ:
+        return os.environ['OPENAI_PROJECT_ID']
+    with open('/run/secrets/openai_config', 'r') as f:
+        data = json.load(f)
+        return data['OPENAI_PROJECT_ID']
+
+
+
 class Agent:
     def __init__(self, vm: Optional[VM] = None, client=None):
         if vm is None:
             vm = VM.create()
         if client is None:
-            OpenAI()
+            client = OpenAI(api_key=get_openai_api_key(),
+                            project=get_openai_project_id(),
+                            organization=get_openai_organization_id())
         self.client = client
         self.vm = vm
 

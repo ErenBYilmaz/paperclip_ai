@@ -24,8 +24,7 @@ class TestDockerAPI(unittest.TestCase):
         self.assertEqual(response['return_code'], 0)
 
     def test_screenshot(self):
-        image_data_b64 = self.a.get_screenshot()['image_data']
-        self.assertIsInstance(image_data_b64, str)
+        image_data_b64 = self.a.img_to_base64(self.a.cropped_screenshot())
         decoded = base64.b64decode(image_data_b64)
         self.assertIsInstance(decoded, bytes)
         img = PIL.Image.open(io.BytesIO(decoded))
