@@ -8,3 +8,9 @@ class TestOpenAIRequest(unittest.TestCase):
         a = Agent()
         r = a.get_initial_response()
         print(r)
+
+    def test_list_models(self):
+        a = Agent()
+        models = a.client.models.list()
+        assert any(model.id.startswith(a.model) for model in models)
+        print([model.id for model in models])

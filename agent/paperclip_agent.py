@@ -37,7 +37,7 @@ def get_openai_project_id():
 
 
 class Agent:
-    def __init__(self, vm: Optional[VM] = None, client=None):
+    def __init__(self, vm: Optional[VM] = None, client=None, model="computer-use-preview"):
         if vm is None:
             vm = VM.create()
         if client is None:
@@ -45,6 +45,7 @@ class Agent:
                             project=get_openai_project_id(),
                             organization=get_openai_organization_id())
         self.client = client
+        self.model = model
         self.vm = vm
 
     def get_initial_response(self):
@@ -83,7 +84,7 @@ class Agent:
     def openai_api_request(self):
         screenshot_base64 = self.get_screenshot()['image_data']
         return self.client.responses.create(
-            model="computer-use-preview",
+            model=self.model,
             tools=[{
                 "type": "computer_use_preview",
                 "display_width": 1024,
@@ -94,10 +95,6 @@ class Agent:
                 {
                     "role": "user",
                     "content": "Check the latest OpenAI news on bing.com."
-                },
-                {
-                    "type": "input_image",
-                    "image_url": f"data:image/png;base64,{screenshot_base64}"
                 }
             ],
             reasoning={
