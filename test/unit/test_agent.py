@@ -32,3 +32,9 @@ class TestAgent(unittest.TestCase):
         encoded = self.a.img_to_base64(decoded)
         decoded_2 = self.a.base64_to_img(encoded)
         assert numpy.array_equal(decoded, decoded_2)
+
+    def test_crop_screenshot(self):
+        cropped = self.a.cropped_screenshot()
+        assert isinstance(cropped, numpy.ndarray)
+        black_ratio = numpy.count_nonzero(cropped == 0) / cropped.size
+        assert black_ratio < 0.2
