@@ -1,6 +1,6 @@
 import unittest
 
-from docker_api import VM
+from browser_automation_client import VM
 
 
 class TestDockerAPI(unittest.TestCase):
