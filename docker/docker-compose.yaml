@@ -2,8 +2,8 @@ name: paperclip_ai
 services:
   paperclip_browser_container:
     build:
-      context: .
-      dockerfile: DockerfileVM
+      context: browser-use-mcp-server
+      dockerfile: Dockerfile
       secrets:
         - vnc_password
     image: paperclip_browser_container
@@ -29,6 +29,8 @@ services:
         USER_ID: 197609
         GROUP_ID: 197121
         USERNAME: eren
+      secrets:
+        - vnc_password
     image: eren_container_paperclip_ai
     container_name: eren_container_paperclip_ai
     user: "197609:197121"

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "/code/agent/puppeteer_mcp_with_ui.sh",
+      "args": []
+    }
+  }
+}

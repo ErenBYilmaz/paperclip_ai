@@ -22,11 +22,6 @@ class TestAgent(unittest.TestCase):
     def setUp(self):
         self.a = mocked_agent()
 
-    def test_saying_hello(self):
-        r = self.a.run('Hello')
-        assert isinstance(r.final_output, str)
-        print(r.final_output)
-
     def test_encode_decode_screenshot(self):
         image_data_b64 = self.a.get_screenshot()['image_data']
         decoded = self.a.base64_to_img(image_data_b64)

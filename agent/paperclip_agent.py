@@ -31,10 +31,13 @@ class Agent:
         if mcp_servers is None:
             mcp_servers = []
         self.mcp_servers = mcp_servers
+        mcp_config_path = os.path.join(os.path.dirname(__file__), 'mcp.json')
+        with open(mcp_config_path, 'r') as f:
+            mcp_config = json.load(f)
         self.openai_agent = agents.Agent(
             name='Assistant',
             instructions="You are a helpful assistant. You will be given a series of tasks to perform. ",
-            mcp_servers=self.mcp_servers,
+            mcp_config=mcp_config,
         )
         self.vm = vm
 

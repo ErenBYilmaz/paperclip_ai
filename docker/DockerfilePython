@@ -32,9 +32,19 @@ RUN pip install https://github.com/openai/CLIP/archive/d50d76daa670286dd6cacf3bc
 RUN pip install -U -I --no-deps xformers==0.0.27 --index-url https://download.pytorch.org/whl/cu118
 # RUN pip install https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.3-cp310-cp310-linux_x86_64.whl
 RUN pip install wandb==0.16.6 fastapi==0.111.0 comfyui-frontend-package==1.14.6 "kornia>=0.7.1" spandrel soundfile av GitPython dynamicprompts piexif argostranslate deep-translator googletrans-py ultralytics==8.3.40 openai openai-agents
-# RUN pip install pydantic==2.8.2
 
-#COPY . /opt
-#WORKDIR /opt
+USER root
+RUN apt-get update && apt-get install -y xfce4 xfce4-goodies x11vnc xvfb xdotool imagemagick x11-apps sudo software-properties-common imagemagick curl git unzip graphviz nano ffmpeg libsm6 libxext6 python3 python3-pip python-is-python3 && apt-get remove -y light-locker xfce4-screensaver xfce4-power-manager || true  && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=secret,id=vnc_password \
+    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /home/$USERNAME/.vncpass
+USER $USERNAME
+
+ENV NODE_VERSION=22.14.0
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
+ENV NVM_DIR=/home/$USERNAME/.nvm
+RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
+ENV PATH="/home/$USERNAME/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 
 WORKDIR /code
