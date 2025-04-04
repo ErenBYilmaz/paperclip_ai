@@ -38,6 +38,8 @@ class Agent:
         async with self.mcp_server_stack:
             print('servers running')
             result = await Runner.run(self.openai_agent, prompt)
+            print('Waiting another 10 seconds before shutdown...')
+            await asyncio.sleep(10)
         await asyncio.sleep(0.2)
         return result
 
