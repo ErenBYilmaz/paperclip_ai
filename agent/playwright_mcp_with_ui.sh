@@ -5,5 +5,4 @@ x11vnc -display host.docker.internal:0.0 -forever -rfbauth /home/myuser/.vncpass
 sudo service dbus start
 echo $DISPLAY
 sleep 1
-#npx --no-install @modelcontextprotocol/server-puppeteer 3<&0 2>&1
 npx --no-install @executeautomation/playwright-mcp-server 3<&0 2>&1
