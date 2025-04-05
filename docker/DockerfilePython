@@ -47,11 +47,13 @@ RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="/home/$USERNAME/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+# RUN . "$NVM_DIR/nvm.sh" && ((echo "y\n"; sleep 10; echo "n\n"; sleep 2; echo "n\n") | npx @michaellatman/mcp-get@latest install @executeautomation/playwright-mcp-server)
+RUN . "$NVM_DIR/nvm.sh" && npx -y @executeautomation/playwright-mcp-server
 
 USER root
 RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 USER $USERNAME
-EXPOSE 5900 # VNC
+EXPOSE 5900
 
 
 WORKDIR /code
