@@ -3,6 +3,7 @@ import os
 import unittest
 
 import mcp_servers
+from frontend_v3 import Chat
 from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
 from test.resources import example_savegame_8_clips
@@ -50,4 +51,13 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             print(html_response)
             print('Waiting 10 seconds for the server to process the request...')
             await asyncio.sleep(10)
+        await asyncio.sleep(1)
+
+    async def test_grabbing_example_html(self):
+        prompt = 'Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". Then open "example.com" using "playwright_navigate" and grab the html from there as well.'
+        async with self.servers:
+            chat = await Chat.create(self.servers)
+            response = chat.get_next_response(prompt)
+            await chat.process_response(response)
+            await asyncio.sleep(1)
         await asyncio.sleep(1)
