@@ -33,26 +33,28 @@ class MCPServerStack:
         for server in self.mcp_servers:
             await server.__aexit__(exc_type, exc_val, exc_tb)
 
+    async def connect(self):
+        for server in self.mcp_servers:
+            await server.connect()
+
     async def list_available_mcp_tools(self):
         """
         Create a list of MCPServer objects from the given configuration.
         """
         all_tools = []
-        async with self:
-            for server in self.mcp_servers:
-                tools = await server.list_tools()
-                for tool in tools:
-                    print(tool)
-                all_tools.extend(tools)
-        await asyncio.sleep(0.2)
+        for server in self.mcp_servers:
+            tools = await server.list_tools()
+            for tool in tools:
+                print(tool)
+            all_tools.extend(tools)
         return all_tools
 
-    def tools_on_servers(self) -> Dict[str, List[str]]:
+    async def tools_by_servers(self) -> Dict[str, List[str]]:
         if self._tools_on_servers_cached is None:
             result = {}
             for server in self.mcp_servers:
                 server_name = server.name
-                tools = asyncio.run(server.list_tools())
+                tools = await server.list_tools()
                 result[server_name] = [tool.name for tool in tools]
             self._tools_on_servers_cached = result
         return self._tools_on_servers_cached
@@ -81,16 +83,22 @@ class MCPServerStack:
             mcp_config = json.load(f)
         return mcp_config
 
-    async def call_tool(self, tool_name, arguments):
+    async def call_tool(self, server, tool_name, arguments):
+        await server.call_tool(tool_name, arguments)
+
+    async def server_by_tool(self, tool_name):
+        tools_by_servers = await self.tools_by_servers()
         servers = [server for server in self.mcp_servers
-                   if tool_name in self.tools_on_servers()[server.name]]
+                   if tool_name in tools_by_servers[server.name]]
         assert len(servers) == 1
         server = servers[0]
-        await server.call_tool(tool_name, arguments)
+        return server
 
 
 def main():
-    asyncio.run(MCPServerStack.from_config().list_available_mcp_tools())
+    servers = MCPServerStack.from_config()
+    asyncio.run(servers.list_available_mcp_tools())
+    # asyncio.run(servers.__aexit__(None, None, None))
 
 
 if __name__ == '__main__':

@@ -47,15 +47,21 @@ services:
   mcp_server_container:
     image: eren_container_paperclip_ai
     container_name: eren_container_mcp_server
+    environment:
+      VNC_PASSWORD_FILE: /run/secrets/vnc_password
+      DISPLAY: host.docker.internal:0.0
     user: "197609:197121"
     ports:
       - "16041:16041"
+#      - "5900:5900"
     volumes:
       - src:/code
+    secrets:
+      - vnc_password
     networks:
       - mcp_network
 #    command: /bin/sh -c "/opt/conda/bin/python3 /code/mcp_servers/example_server.py"
-    command: uvx mcpo --host 0.0.0.0 --port 16041 -- /opt/conda/bin/python3 /code/mcp_servers/example_server.py
+    command: /bin/sh -c "export DISPLAY=host.docker.internal:0.0 && uvx mcpo --host 0.0.0.0 --port 16041 -- /opt/conda/bin/python3 /code/mcp_servers/example_server.py"
 
 volumes:
   src:

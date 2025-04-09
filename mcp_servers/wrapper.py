@@ -2,8 +2,10 @@ import asyncio
 import functools
 
 from mcp.server import FastMCP
+from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata
 
 from agent.mcp_servers import MCPServerStack
+from mcp_servers.json_schema_to_pydantic_model import json_schema_to_base_model
 
 
 def synchronize(func):
@@ -21,22 +23,35 @@ class MCPServerWrapper:
         self.host = host
         self.port = port
 
-    def wrapped_tool_call(self, tool_name):
-        @functools.wraps(self.wrapped_servers.call_tool)
-        def wrapper(arguments):
-            return asyncio.run(self.wrapped_servers.call_tool(tool_name, arguments))
+    async def __aenter__(self):
+        await self.wrapped_servers.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.wrapped_servers.__aexit__(exc_type, exc_val, exc_tb)
+
+    def wrapped_tool_call(self, tool_name, server):
+        # @functools.wraps(self.wrapped_servers.call_tool)
+        async def wrapper(**arguments):
+            return await self.wrapped_servers.call_tool(tool_name=tool_name,
+                                                        server=server,
+                                                        arguments=arguments)
 
         return wrapper
 
-    def get_server(self) -> FastMCP:
-        tools = asyncio.run(self.wrapped_servers.list_available_mcp_tools())
+    async def get_server(self) -> FastMCP:
+        tools = await self.wrapped_servers.list_available_mcp_tools()
         result = FastMCP(self.name)
         result.settings.port = self.port
         result.settings.host = self.host
         for tool in tools:
-            result.add_tool(self.wrapped_tool_call(tool.name), tool.name, tool.description)
+            server = await self.wrapped_servers.server_by_tool(tool.name)
+            result.add_tool(self.wrapped_tool_call(tool.name, server=server), tool.name, tool.description)
             added_tool = result._tool_manager.get_tool(tool.name)
             assert added_tool.name == tool.name
             added_tool.parameters = tool.inputSchema
             added_tool.parameters['title'] = f'{tool.name}Arguments'
+            arguments_model = json_schema_to_base_model(tool.inputSchema)
+            # schema.model_config['arbitrary_types_allowed'] = True
+            added_tool.fn_metadata = FuncMetadata(arg_model=arguments_model)
         return result
