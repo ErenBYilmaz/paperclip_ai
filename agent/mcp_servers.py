@@ -84,7 +84,7 @@ class MCPServerStack:
         return mcp_config
 
     async def call_tool(self, server, tool_name, arguments):
-        await server.call_tool(tool_name, arguments)
+        return await server.call_tool(tool_name, arguments)
 
     async def server_by_tool(self, tool_name):
         tools_by_servers = await self.tools_by_servers()

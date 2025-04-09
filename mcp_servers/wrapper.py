@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from typing import Dict, Callable
 
 from mcp.server import FastMCP
 from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata
@@ -54,4 +55,12 @@ class MCPServerWrapper:
             arguments_model = json_schema_to_base_model(tool.inputSchema)
             # schema.model_config['arbitrary_types_allowed'] = True
             added_tool.fn_metadata = FuncMetadata(arg_model=arguments_model)
+        return result
+
+    async def tool_dict(self) -> Dict[str, Callable]:
+        tools = await self.wrapped_servers.list_available_mcp_tools()
+        result = {}
+        for tool in tools:
+            server = await self.wrapped_servers.server_by_tool(tool.name)
+            result[tool.name] = self.wrapped_tool_call(tool.name, server=server)
         return result

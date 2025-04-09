@@ -1,38 +1,46 @@
-from typing import Dict, Callable
+import asyncio
+import os
 
 import ollama
+
+from agent.mcp_servers import MCPServerStack
+from mcp_servers.wrapper import MCPServerWrapper
 
 
 def get_current_weather() -> str:
     """Find out the current weather at your location. Returns the weather information as a descriptive text."""
     return f'The weather is sunny, with volcanic ashes in the sky.'
 
-def main():
-    # prompt = input('> ')
-    prompt = 'What is the current weather? good for getting my airplane out and having flight?'
-    tools = [get_current_weather]
-    tools_by_name: Dict[str, Callable] = {
-        tool.__name__: tool
-        for tool in tools
-    }
-    client = ollama.Client(
-        host='host.docker.internal'
-    )
-    response = client.chat(
-        'llama3.2',
-        messages=[{'role': 'user', 'content': prompt}],
-        tools=tools
-    )
-    if response.message.tool_calls:
-        for tool in response.message.tool_calls:
-            if tool.function.name not in tools_by_name:
-                raise ValueError(f"Tool {tool.function.name} not found")
-            tool_function = tools_by_name[tool.function.name]
-            arguments = tool.function.arguments
-            print('Calling tool:', tool_function.__name__, 'with arguments:', arguments)
-            tool_response = tool_function(**arguments)
-            print('Tool response:', tool_response)
+async def main():
+    prompt = 'Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". Then open "example.com" using "playwright_navigate" and grab the html from there as well.'
+    servers = MCPServerWrapper(name="Demo", wrapped_servers=MCPServerStack.from_config(os.path.join(os.path.dirname(__file__), 'mcp_servers', 'wrapped_mcps.json')))
+    async with servers:
+        tools_by_name = await servers.tool_dict()
+        tools = list(tools_by_name.values())
+        print('Tools:', list(tools_by_name))
+
+        client = ollama.Client(
+            host='host.docker.internal'
+        )
+        response = client.chat(
+            'llama3.2',
+            messages=[{'role': 'user', 'content': prompt}],
+            tools=tools
+        )
+        print(response.message.content)
+        if response.message.tool_calls:
+            for tool in response.message.tool_calls:
+                if tool.function.name not in tools_by_name:
+                    raise ValueError(f"Tool {tool.function.name} not found")
+                tool_function = tools_by_name[tool.function.name]
+                arguments = tool.function.arguments
+                print('Calling tool:', tool.function.name, 'with arguments:', arguments)
+                tool_response = await tool_function(**arguments)
+                print('Tool response:', tool_response)
+                await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
+    await asyncio.sleep(10)
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
