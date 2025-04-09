@@ -7,3 +7,6 @@
 - ~~[ ] switch to epiphany: https://www.youtube.com/watch?v=KNhE4l-4aTc~~
 - [ ] combine MCPServerWrapper and MCPServerStack into one class
 - [ ] fix data format of tools in chat.client.chat
+- [ ] send message history with subsequent messages
+- [ ] full auto with possibility to interrupt
+- [ ] saving and resuming progress
