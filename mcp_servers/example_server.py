@@ -2,7 +2,7 @@ import asyncio
 import os.path
 from typing import Literal
 
-from agent.mcp_servers import MCPServerStack
+from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
 
 

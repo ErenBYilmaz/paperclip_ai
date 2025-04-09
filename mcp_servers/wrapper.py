@@ -5,8 +5,8 @@ from typing import Dict, Callable
 from mcp.server import FastMCP
 from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata
 
-from agent.mcp_servers import MCPServerStack
 from mcp_servers.json_schema_to_pydantic_model import json_schema_to_base_model
+from mcp_servers.server_stack import MCPServerStack
 
 
 def synchronize(func):

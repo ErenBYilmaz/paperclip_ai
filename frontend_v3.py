@@ -3,13 +3,9 @@ import os
 
 import ollama
 
-from agent.mcp_servers import MCPServerStack
+from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
 
-
-def get_current_weather() -> str:
-    """Find out the current weather at your location. Returns the weather information as a descriptive text."""
-    return f'The weather is sunny, with volcanic ashes in the sky.'
 
 async def main():
     prompt = 'Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". Then open "example.com" using "playwright_navigate" and grab the html from there as well.'
