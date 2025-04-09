@@ -20,7 +20,6 @@ services:
     volumes:
       - src:/code
     secrets:
-      - openai_config
       - vnc_password
     networks:
       - mcp_network
@@ -32,7 +31,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
-  open_webui: # docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+  open_webui:
       image: ghcr.io/open-webui/open-webui:main
       container_name: open-webui
       ports:
@@ -72,8 +71,6 @@ volumes:
       o: bind
 
 secrets:
-  openai_config:
-    file: secrets/openai_config.json
   vnc_password:
     file: ./secrets/vnc_password.txt
 networks:

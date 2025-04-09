@@ -8,11 +8,7 @@ The goal is to have an LLM-based AI Agent that plays the game of [Universal Pape
 
 1. Install docker (docker desktop on windows)
 2. Copy `docker/secrets_template` to `docker/secrets` and add passwords to the `.txt` files inside
-   - openai_config.json: 
-     - create API key on https://platform.openai.com
-     - look up project id and organization id in your openai account on https://platform.openai.com/settings/organization/general
-   - vnc_password.txt: generate a random password yourself
-3. Add the openai-related variables also to `docker/browser-use-mcp-server/.env`
+   - vnc_password.txt: generate a random password yourself and put it into the file
 3. Build image and run container
     ```
     docker compose build

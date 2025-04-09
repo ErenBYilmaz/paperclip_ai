@@ -8,8 +8,13 @@ SHELL ["/bin/bash", "--login", "-c"]
 # otherwise apt-get may ask for time zone information
 ENV DEBIAN_FRONTEND=noninteractive
 # some useful tools
-RUN apt-get update && apt-get install curl git unzip graphviz nano ffmpeg libsm6 libxext6 -y && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update \
+    && apt-get install -y curl git unzip graphviz nano ffmpeg libsm6 libxext6 xfce4 xfce4-goodies x11vnc xvfb xdotool imagemagick x11-apps sudo software-properties-common imagemagick curl git unzip graphviz nano ffmpeg libsm6 libxext6 python3 python3-pip python-is-python3 \
+    && apt-get remove -y light-locker xfce4-screensaver xfce4-power-manager || true \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=secret,id=vnc_password \
+    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /home/$USERNAME/.vncpass
 
 # create current user inside image, so that newly created files belong to us and not to root and can be accessed outside docker as well
 ARG USER_ID
@@ -18,20 +23,15 @@ ARG USERNAME
 #RUN mkdir -p /docker/$USERNAME
 #RUN ln -s `which python` /docker/$USERNAME/python # this way we will see the username in the process name even outside of docker
 RUN addgroup --gid $GROUP_ID $USERNAME && adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID $USERNAME && usermod -a -G root $USERNAME && addgroup --gid 1011 data-acc && usermod -a -G data-acc $USERNAME
+RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 USER $USERNAME
 
 # Create environment
 RUN pip install hanging_threads colorama matplotlib numpy pandas cachetools tabulate yappi graphviz joblib scipy gitpython markdown2 seaborn psutil pydot numba scikit-learn scikit-image pygments natsort voluptuous humanfriendly coloredlogs simpleitk itk openpyxl jupyterlab jupyter "xlrd < 2" pydot pydicom click sympy lifelines dill plotly wandb==0.16.6 pycryptodome schedule
-
-# outside of docker you also need:
-# RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 RUN pip install pytorch-lightning==1.9.4 einops perceiver-pytorch transformers datasets torchview monai kornia scikit-survival accelerate umap-learn gradio==4.40.0 gradio_rangeslider gradio_imageslider loadimg peft omegaconf open-clip-torch diskcache opencv-python piexif pillow-avif-plugin jsonmerge torchdiffeq torchsde clean-fid ngrok resize-right blendmodes facexlib safetensors spandrel spandrel-extra-arches tomesd lark inflection httpcore httpx rich dynamicprompts controlnet_aux ip-adapter diffusers ultralytics onnxruntime-gpu pydantic==2.8.2 huggingface-hub hydra-core albumentations==1.4.3 segment_anything loguru bitsandbytes==0.45.2 huggingface_guess
 RUN pip install https://github.com/openai/CLIP/archive/d50d76daa670286dd6cacf3bcd80b5e4823fc8e1.zip https://github.com/mlfoundations/open_clip/archive/bb6e834e9c70d9c27d0dc3ecedeebeaeb1ffad6b.zip
-# RUN pip install --upgrade cmake \
-
 RUN pip install -U -I --no-deps xformers==0.0.27 --index-url https://download.pytorch.org/whl/cu118
-# RUN pip install https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.3-cp310-cp310-linux_x86_64.whl
-RUN pip install wandb==0.16.6 fastapi==0.111.0 comfyui-frontend-package==1.14.6 "kornia>=0.7.1" spandrel soundfile av GitPython dynamicprompts piexif argostranslate deep-translator googletrans-py ultralytics==8.3.40 openai openai-agents
+RUN pip install wandb==0.16.6 fastapi==0.111.0 comfyui-frontend-package==1.14.6 "kornia>=0.7.1" spandrel soundfile av GitPython dynamicprompts piexif argostranslate deep-translator googletrans-py ultralytics==8.3.40 openai openai-agents uv ollama
 
 USER root
 RUN apt-get update && apt-get install -y xfce4 xfce4-goodies x11vnc xvfb xdotool imagemagick x11-apps sudo software-properties-common imagemagick curl git unzip graphviz nano ffmpeg libsm6 libxext6 python3 python3-pip python-is-python3 && apt-get remove -y light-locker xfce4-screensaver xfce4-power-manager || true  && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -50,13 +50,7 @@ ENV PATH="/home/$USERNAME/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 RUN . "$NVM_DIR/nvm.sh" && npx -y @executeautomation/playwright-mcp-server
 RUN . "$NVM_DIR/nvm.sh" && npx playwright install
 
-USER root
-RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-USER $USERNAME
 EXPOSE 5900
-
-RUN pip install uv
 ENV PATH="/home/$USERNAME/.local/bin/:${PATH}"
-RUN pip install ollama
 
 WORKDIR /code
