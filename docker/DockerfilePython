@@ -57,5 +57,6 @@ EXPOSE 5900
 
 RUN pip install uv
 ENV PATH="/home/$USERNAME/.local/bin/:${PATH}"
+RUN pip install ollama
 
 WORKDIR /code

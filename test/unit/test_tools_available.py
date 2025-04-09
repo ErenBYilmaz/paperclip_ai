@@ -25,7 +25,7 @@ class TestTools(unittest.TestCase):
 
         async def call():
             async with server:
-                print(await server.call_tool('playwright_navigate', {"url": "https://www.example.com", "browserType": 'chromium'}))
+                print(await server.call_tool('playwright_navigate', {"url": "https://www.example.com", "browserType": "chromium"}))
                 print(await server.call_tool('playwright_save_as_pdf', {"outputPath": "/code/", "filename": "test.pdf", "browserType": 'chromium'}))
                 print('Waiting 10 seconds for the server to process the request...')
                 await asyncio.sleep(10)
@@ -46,7 +46,7 @@ class TestTools(unittest.TestCase):
 
         async def call():
             async with server:
-                print(await server.call_tool('playwright_navigate', {"url": "https://www.decisionproblem.com/paperclips/index2.html", "browserType": 'chromium'}))
+                print(await server.call_tool('playwright_navigate', {"url": "https://www.decisionproblem.com/paperclips/index2.html", "browserType": "chromium"}))
                 json_dumped_save = example_savegame_8_clips
                 javascript_call_for_restoring_savegame = f's = JSON.parse({json_dumped_save});' + 'for (const key in s){localStorage.setItem(key, s[key])};load()'
                 print(javascript_call_for_restoring_savegame)

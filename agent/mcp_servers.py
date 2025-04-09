@@ -97,8 +97,12 @@ class MCPServerStack:
 
 def main():
     servers = MCPServerStack.from_config()
-    asyncio.run(servers.list_available_mcp_tools())
-    # asyncio.run(servers.__aexit__(None, None, None))
+    async def ls():
+        async with servers:
+            result = await servers.list_available_mcp_tools()
+        await asyncio.sleep(0.5)
+        return result
+    asyncio.run(ls())
 
 
 if __name__ == '__main__':
