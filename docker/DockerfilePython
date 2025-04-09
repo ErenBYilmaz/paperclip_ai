@@ -13,8 +13,6 @@ RUN apt-get update \
     && apt-get remove -y light-locker xfce4-screensaver xfce4-power-manager || true \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-RUN --mount=type=secret,id=vnc_password \
-    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /home/$USERNAME/.vncpass
 
 # create current user inside image, so that newly created files belong to us and not to root and can be accessed outside docker as well
 ARG USER_ID
@@ -24,6 +22,8 @@ ARG USERNAME
 #RUN ln -s `which python` /docker/$USERNAME/python # this way we will see the username in the process name even outside of docker
 RUN addgroup --gid $GROUP_ID $USERNAME && adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID $USERNAME && usermod -a -G root $USERNAME && addgroup --gid 1011 data-acc && usermod -a -G data-acc $USERNAME
 RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN --mount=type=secret,id=vnc_password \
+    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /home/$USERNAME/.vncpass
 USER $USERNAME
 
 # Create environment
@@ -48,7 +48,7 @@ RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="/home/$USERNAME/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 RUN . "$NVM_DIR/nvm.sh" && npx -y @executeautomation/playwright-mcp-server
-RUN . "$NVM_DIR/nvm.sh" && npx playwright install
+RUN . "$NVM_DIR/nvm.sh" && npx playwright install chromium
 
 EXPOSE 5900
 ENV PATH="/home/$USERNAME/.local/bin/:${PATH}"
