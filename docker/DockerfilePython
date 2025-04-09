@@ -55,5 +55,8 @@ RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 USER $USERNAME
 EXPOSE 5900
 
+RUN pip install uv
+#RUN pip install mcpo --ignore-requires-python
+ENV PATH="/home/$USERNAME/.local/bin/:${PATH}"
 
 WORKDIR /code

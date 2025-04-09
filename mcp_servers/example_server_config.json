@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "example": {
+      "url": "http://mcp_server_container:16041"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "/code/agent/playwright_mcp_with_ui.sh",
+      "args": []
+    }
+  }
+}

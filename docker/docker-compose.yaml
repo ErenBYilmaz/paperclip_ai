@@ -23,7 +23,7 @@ services:
       - openai_config
       - vnc_password
     networks:
-      - browser_automation_network
+      - mcp_network
     command: /bin/sh -c "export DISPLAY=host.docker.internal:0.0 && /opt/conda/bin/python3 /code/main.py"
     deploy:
       resources:
@@ -32,6 +32,31 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
+  open_webui: # docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+      image: ghcr.io/open-webui/open-webui:main
+      container_name: open-webui
+      ports:
+        - "3000:8080"
+      volumes:
+        - ../open-webui:/app/backend/data
+      restart: always
+      networks:
+        - mcp_network
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+  mcp_server_container:
+    image: eren_container_paperclip_ai
+    container_name: eren_container_mcp_server
+    user: "197609:197121"
+    ports:
+      - "16041:16041"
+    volumes:
+      - src:/code
+    networks:
+      - mcp_network
+#    command: /bin/sh -c "/opt/conda/bin/python3 /code/mcp_servers/example_server.py"
+    command: uvx mcpo --host 0.0.0.0 --port 16041 -- /opt/conda/bin/python3 /code/mcp_servers/example_server.py
+
 volumes:
   src:
     driver: local
@@ -46,7 +71,7 @@ secrets:
   vnc_password:
     file: ./secrets/vnc_password.txt
 networks:
-  browser_automation_network:
+  mcp_network:
     driver: bridge
     driver_opts:
       com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
