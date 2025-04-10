@@ -90,10 +90,35 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
         async with self.servers:
             chat = await Chat.create(self.servers, model_name='mistral-nemo')
             chat.add_system_message('You are a helpful assistant that can use tools to interact with the web. '
-                                    'You use the chat history and the provided tools to get the information you need. '
-                                    'You can do simple math, but you are not a calculator. ')
+                                    'You use the chat history and the provided tools to get the information you need.')
             await chat.interaction(prompt)
             last_message = chat.messages[-1]
+            self.assertIn('#f0f0f2', last_message.content)
+            await asyncio.sleep(1)
+        await asyncio.sleep(1)
+
+    async def test_automation_without_naming_tools(self):
+        # prompt = 'Get the background color of the body at example.com. You will probably find it in the visible html when you have navigated to that page.'
+        prompt = ('Hello. Get the visible html of the currently opened page in playwright. '
+                  'Then use playwright to navigate to "example.com" and grab the html from there as well. '
+                  'Check if you find the background color of the body of example.com in the html and report back to me.')
+
+        async with self.servers:
+            chat = await Chat.create(self.servers, model_name='qwen2.5-coder')
+            chat.remove_tools([t.function.name for t in chat.tools_list()
+                               if 'codegen' in t.function.name
+                               or 'assert' in t.function.name
+                               or 'expect' in t.function.name]
+                              + ['playwright_get', 'playwright_post', 'playwright_put', 'playwright_delete', 'playwright_patch', 'playwright_evaluate'])
+            # chat.callbacks.append(AfterToolCallAnotherTool('playwright_evaluate',
+            #                                                ollama.Message.ToolCall(function=ollama.Message.ToolCall.Function(name='playwright_console_logs', arguments={"clear": True}))))
+            chat.print_tools()
+            # chat.add_tools_system_message()
+            # chat.add_system_message('You are a helpful assistant that can use tools to interact with the web. '
+            #                         'You use the chat history and the provided tools to get the information you need.')
+            await chat.interaction(prompt)
+            last_message = chat.messages[-1]
+            print(chat.history_str())
             self.assertIn('#f0f0f2', last_message.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)

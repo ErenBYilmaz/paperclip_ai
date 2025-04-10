@@ -44,8 +44,6 @@ class MCPServerStack:
         all_tools = []
         for server in self.mcp_servers:
             tools = await server.list_tools()
-            for tool in tools:
-                print(tool)
             all_tools.extend(tools)
         return all_tools
 
