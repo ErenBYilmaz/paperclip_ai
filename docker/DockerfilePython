@@ -50,7 +50,7 @@ ENV PATH="/home/$USERNAME/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 RUN . "$NVM_DIR/nvm.sh" && npx -y @executeautomation/playwright-mcp-server
 RUN . "$NVM_DIR/nvm.sh" && npx playwright install chromium
 
-RUN pip install pynput
+RUN pip install lxml
 EXPOSE 5900
 ENV PATH="/home/$USERNAME/.local/bin/:${PATH}"
 WORKDIR /code

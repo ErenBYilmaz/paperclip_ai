@@ -5,22 +5,8 @@ import ollama
 from mcp.types import CallToolResult, TextContent
 from ollama import Message
 
+from callback import ChatCallback
 from mcp_servers.wrapper import MCPServerWrapper
-
-
-class ChatCallback:
-    async def after_tool_call(self, chat: 'Chat', tool: ollama.Message.ToolCall, tool_response):
-        raise NotImplementedError('Abstract method')
-
-
-class AfterToolCallAnotherTool(ChatCallback):
-    def __init__(self, first_tool_name: str, other_tool_call: ollama.Message.ToolCall):
-        self.first_tool_name = first_tool_name
-        self.other_tool_call = other_tool_call
-
-    async def after_tool_call(self, chat: 'Chat', tool: ollama.Message.ToolCall, tool_response):
-        if tool.function.name == self.first_tool_name:
-            await chat.call_tool_and_add_output_message(self.other_tool_call)
 
 
 def create_tool_call_object(name: str, arguments: Mapping[str, Any]):

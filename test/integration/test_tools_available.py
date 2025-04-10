@@ -3,6 +3,7 @@ import os
 import unittest
 
 import mcp_servers
+from callback import RemoveInvisibleHTML
 from frontend_v3 import Chat, create_tool_call_object
 from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
@@ -119,9 +120,9 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
 
     async def test_making_a_few_paperclips(self):
         prompt = ('Hello. We are playing the browsergame "Universal Paperclips"! '
-                  'I have already opened the web browser for you. '
-                  'Get the visible html and come up with a css selector for the button that makes paperclips. '
-                  'Click the button to make a paperclip four times, then check the new html of the page and report how many paperclips we have available now.')
+                  'I have already opened the web browser for you and collected the html contents. '
+                  'Get the visible html and click the paperclip-making button. '
+                  'Then check the new html of the page and report how many paperclips we have available now.')
 
         async with self.servers:
             chat = await Chat.create(self.servers, model_name='mistral-nemo')
@@ -134,12 +135,13 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
                                or 'assert' in t.function.name
                                or 'expect' in t.function.name]
                               + ['playwright_get', 'playwright_post', 'playwright_put', 'playwright_delete', 'playwright_patch', 'playwright_evaluate'])
+            chat.callbacks.append(RemoveInvisibleHTML())
             chat.messages.clear()
             chat.print_tools()
             await chat.interaction(prompt)
             print(chat.history_str())
             last_message = chat.messages[-1]
-            self.assertIn('12', last_message.content)
+            self.assertIn('9', last_message.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 
