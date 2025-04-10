@@ -62,13 +62,22 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(1)
 
     async def test_grabbing_example_html(self):
-        prompt = 'Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". Then open "example.com" using "playwright_navigate" and grab the html from there as well.'
+        prompt = 'Hello. Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". Then open "example.com" using "playwright_navigate" and grab the html from there as well.'
         async with self.servers:
-            chat = await Chat.create(self.servers)
+            chat = await Chat.create(self.servers, model_name='mistral-nemo')
+            chat.add_system_message('You are a helpful assistant that can use tools to interact with the web. '
+                                    'You dont provide code, but instead use the chat history and the provided tools to get the information you need. '
+                                    'You can do simple math, but you are not a calculator. ')
             response = chat.get_next_response(prompt)
             await chat.process_response(response)
-            response = chat.get_next_response('What is 7 + 4?')
+            self.assertIsNotNone(response.message.tool_calls)
+            assert len(response.message.tool_calls) > 0
+            response = chat.get_next_response('What is the background color of the body of the page we just looked at?')
             await chat.process_response(response)
+            if '#f0f0f2' not in response.message.content:
+                response = chat.get_next_response(None)  # continue the conversation without a new prompt, but with the tool output
+            await chat.process_response(response)
+            self.assertIn('#f0f0f2', response.message.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 

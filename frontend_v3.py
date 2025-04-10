@@ -1,4 +1,4 @@
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Optional
 
 import ollama
 from mcp.types import CallToolResult, TextContent
@@ -27,8 +27,22 @@ class Chat:
     def tools_list(self) -> List[ollama.Tool]:
         return list(self.tools.values())
 
-    def get_next_response(self, prompt):
-        self.messages.append(ollama.Message(role='user', content=prompt))
+    def add_system_message(self, prompt):
+        self.messages.append({'role': 'system', 'content': prompt})
+        print('System message added:', prompt)
+
+    def add_tools_system_message(self):
+        tools_description = 'You have the following tools available:\n'
+        for tool_name, tool in self.tools.items():
+            tools_description += f"- {tool_name}: {tool.function.description}\n"
+            tools_description += f'  -> {tool_name} arguments: {tool.function.parameters.model_dump_json()}\n'
+        self.add_system_message(prompt=tools_description)
+
+
+    def get_next_response(self, prompt: Optional[str]):
+        if prompt is not None:
+            print('Sending prompt:', prompt)
+            self.messages.append(ollama.Message(role='user', content=prompt))
         return self.client.chat(
             self.model_name,
             messages=self.messages,
@@ -43,7 +57,7 @@ class Chat:
                 if tool.function.name not in self.tools:
                     print('Tool not found:', tool.function.name)
                     self.messages.append(Message(role='tool', content=f"Tool {tool.function.name} not found."))
-                    raise ValueError(f"Tool {tool.function.name} not found")
+                    continue
                 tool_function = self.tool_callables[tool.function.name]
                 arguments = tool.function.arguments
                 print('Calling tool:', tool.function.name, 'with arguments:', arguments)
@@ -58,6 +72,7 @@ class Chat:
                     t = response_content.text
                     if response_content.annotations is not None:
                         raise NotImplementedError('TO DO')
+                    return t
                 else:
                     raise NotImplementedError(f'TO DO: Implement processing {type(response_content)}')
         elif isinstance(tool_response, (int, float, bool)):
