@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Callable, Optional
+from typing import List, Dict, Callable, Optional, Any, Mapping
 
 import ollama
 from mcp.types import CallToolResult, TextContent
@@ -21,6 +21,15 @@ class AfterToolCallAnotherTool(ChatCallback):
     async def after_tool_call(self, chat: 'Chat', tool: ollama.Message.ToolCall, tool_response):
         if tool.function.name == self.first_tool_name:
             await chat.call_tool_and_add_output_message(self.other_tool_call)
+
+
+def create_tool_call_object(name: str, arguments: Mapping[str, Any]):
+    return ollama.Message.ToolCall(
+        function=ollama.Message.ToolCall.Function(
+            name=name,
+            arguments=arguments,
+        ),
+    )
 
 
 class Chat:

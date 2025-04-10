@@ -3,7 +3,7 @@ import os
 import unittest
 
 import mcp_servers
-from frontend_v3 import Chat
+from frontend_v3 import Chat, create_tool_call_object
 from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
 from test.resources import example_savegame_8_clips
@@ -84,7 +84,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
     async def test_automatically_grabbing_example_html(self):
         # prompt = 'Get the background color of the body at example.com. You will probably find it in the visible html when you have navigated to that page.'
         prompt = ('Hello. Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". '
-                  'Then open "example.com" using "playwright_navigate" and grab the html from there as well. '
+                  'Then open "example.com" using "playwright_navigate" and grab the html from there. '
                   'Check if you find the background color of the body in the html and report back to me.')
 
         async with self.servers:
@@ -98,8 +98,8 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(1)
 
     async def test_automation_without_naming_tools(self):
-        prompt = ('Hello. Get the visible html of the currently opened page in playwright. '
-                  'Then use playwright to navigate to "example.com" and grab the html from there as well. '
+        prompt = ('Hello. '
+                  'Use playwright to navigate to "example.com" and grab the html from there as well. '
                   'Check if you find the background color of the body of example.com in the html and report back to me.')
 
         async with self.servers:
@@ -114,6 +114,32 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             last_message = chat.messages[-1]
             print(chat.history_str())
             self.assertIn('#f0f0f2', last_message.content)
+            await asyncio.sleep(1)
+        await asyncio.sleep(1)
+
+    async def test_making_a_paperclip(self):
+        prompt = ('Hello. We are playing the browsergame "Universal Paperclips"! '
+                  'I have already opened the web browser for you. '
+                  'Get the visible html and come up with a css selector for the button that makes paperclips. '
+                  'Click the button to make a paperclip, then check the new html of the page and report how many paperclips we have available now.')
+
+        async with self.servers:
+            chat = await Chat.create(self.servers, model_name='mistral-nemo')
+            await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_navigate', arguments={"url": "https://www.decisionproblem.com/paperclips/index2.html", "browserType": "chromium"}))
+            await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_get_visible_html', arguments={}))
+            javascript_call_for_restoring_savegame = f's = JSON.parse({example_savegame_8_clips});' + 'for (const key in s){localStorage.setItem(key, s[key])};load()'
+            await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_evaluate', arguments={"script": javascript_call_for_restoring_savegame}))
+            chat.remove_tools([t.function.name for t in chat.tools_list()
+                               if 'codegen' in t.function.name
+                               or 'assert' in t.function.name
+                               or 'expect' in t.function.name]
+                              + ['playwright_get', 'playwright_post', 'playwright_put', 'playwright_delete', 'playwright_patch', 'playwright_evaluate'])
+            chat.messages.clear()
+            chat.print_tools()
+            await chat.interaction(prompt)
+            print(chat.history_str())
+            last_message = chat.messages[-1]
+            self.assertIn('9', last_message.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 
