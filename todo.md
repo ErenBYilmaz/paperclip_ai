@@ -10,3 +10,4 @@
 - [ ] send message history with subsequent messages
 - [ ] full auto with possibility to interrupt
 - [ ] saving and resuming progress
+- [ ] Check https://www.youtube.com/watch?v=1Wen70lzX-8

@@ -1,31 +1,37 @@
 import ollama
+from mcp.types import CallToolResult, TextContent
+from ollama import Message
 
 from mcp_servers.wrapper import MCPServerWrapper
 
 
 class Chat:
-    def __init__(self, client: ollama.Client, tools: dict):
+    def __init__(self, client: ollama.Client, tools: dict, model_name='llama3.2'):
         self.client = client
         self.tools = tools
+        self.model_name = model_name
+        self.messages = []
 
     @staticmethod
-    async def create(servers: MCPServerWrapper):
-        client =  ollama.Client(host='host.docker.internal')
+    async def create(servers: MCPServerWrapper, model_name='llama3.2'):
+        client = ollama.Client(host='host.docker.internal')
         tools_by_name = await servers.tool_dict()
-        return Chat(client=client, tools=tools_by_name)
+        return Chat(client=client, tools=tools_by_name, model_name=model_name)
 
     def tools_list(self):
         return list(self.tools.values())
 
     def get_next_response(self, prompt):
+        self.messages.append(ollama.Message(role='user', content=prompt))
         return self.client.chat(
-            'llama3.2',
-            messages=[{'role': 'user', 'content': prompt}],
+            self.model_name,
+            messages=self.messages,
             tools=self.tools_list()
         )
 
-    async def process_response(self, response):
+    async def process_response(self, response: ollama.ChatResponse):
         print('Chat message received:', response.message.content)
+        self.messages.append(response.message)
         if response.message.tool_calls:
             for tool in response.message.tool_calls:
                 if tool.function.name not in self.tools:
@@ -35,3 +41,20 @@ class Chat:
                 print('Calling tool:', tool.function.name, 'with arguments:', arguments)
                 tool_response = await tool_function(**arguments)
                 print('Tool response:', tool_response)
+                self.messages.append(Message(role='tool', content=self.tool_response_to_text(tool_response)))
+
+    def tool_response_to_text(self, tool_response) -> str:
+        if isinstance(tool_response, CallToolResult):
+            for response_content in tool_response.content:
+                if isinstance(response_content, TextContent):
+                    t = response_content.text
+                    if response_content.annotations is not None:
+                        raise NotImplementedError('TO DO')
+                else:
+                    raise NotImplementedError(f'TO DO: Implement processing {type(response_content)}')
+        elif isinstance(tool_response, (int, float, bool)):
+            return str(tool_response)
+        elif isinstance(tool_response, str):
+            return tool_response
+        else:
+            raise NotImplementedError(f'TO DO: Implement processing {type(tool_response)}')

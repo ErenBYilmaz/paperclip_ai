@@ -12,6 +12,7 @@ from test.resources import example_savegame_8_clips
 class TestTools(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.servers = MCPServerWrapper(name="Test", wrapped_servers=MCPServerStack.from_config(os.path.join(os.path.dirname(mcp_servers.__file__), 'wrapped_mcps.json')))
+        self.no_servers = MCPServerWrapper(name="Test", wrapped_servers=MCPServerStack.from_config(os.path.join(os.path.dirname(mcp_servers.__file__), 'no_mcps.json')))
 
     async def test_playwright_tools_available(self):
         async with self.servers:
@@ -26,8 +27,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             server = await self.servers.wrapped_servers.server_by_tool('playwright_navigate')
             print(await server.call_tool('playwright_navigate', {"url": "https://www.example.com", "browserType": "chromium"}))
             print(await server.call_tool('playwright_save_as_pdf', {"outputPath": "/code/screenshots", "filename": "test.pdf", "browserType": 'chromium'}))
-            print('Waiting 10 seconds for the server to process the request...')
-            await asyncio.sleep(10)
+            await asyncio.sleep(2)
         await asyncio.sleep(1)
 
     async def test_if_cookies_are_being_stored(self):
@@ -49,8 +49,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             print(html_response)
             html_response = '\n'.join(html_response.content[0].text.splitlines()[1:])
             print(html_response)
-            print('Waiting 10 seconds for the server to process the request...')
-            await asyncio.sleep(10)
+            await asyncio.sleep(2)
         await asyncio.sleep(1)
 
     async def test_grabbing_example_html(self):
@@ -60,4 +59,15 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             response = chat.get_next_response(prompt)
             await chat.process_response(response)
             await asyncio.sleep(1)
+        await asyncio.sleep(1)
+
+    async def test_model_can_access_previous_messages(self):
+        async with self.no_servers:
+            chat = await Chat.create(self.no_servers)
+            response = chat.get_next_response('What is 7 + 4?')
+            await chat.process_response(response)
+            self.assertIn('11', response.message.content)
+            response = chat.get_next_response('And if you add another 4?')
+            await chat.process_response(response)
+            self.assertIn('11', response.message.content)
         await asyncio.sleep(1)
