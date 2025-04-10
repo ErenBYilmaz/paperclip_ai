@@ -117,11 +117,11 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 
-    async def test_making_a_paperclip(self):
+    async def test_making_a_few_paperclips(self):
         prompt = ('Hello. We are playing the browsergame "Universal Paperclips"! '
                   'I have already opened the web browser for you. '
                   'Get the visible html and come up with a css selector for the button that makes paperclips. '
-                  'Click the button to make a paperclip, then check the new html of the page and report how many paperclips we have available now.')
+                  'Click the button to make a paperclip four times, then check the new html of the page and report how many paperclips we have available now.')
 
         async with self.servers:
             chat = await Chat.create(self.servers, model_name='mistral-nemo')
@@ -139,7 +139,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             await chat.interaction(prompt)
             print(chat.history_str())
             last_message = chat.messages[-1]
-            self.assertIn('9', last_message.content)
+            self.assertIn('12', last_message.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 
