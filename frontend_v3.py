@@ -1,3 +1,5 @@
+from typing import List, Dict, Callable
+
 import ollama
 from mcp.types import CallToolResult, TextContent
 from ollama import Message
@@ -6,19 +8,23 @@ from mcp_servers.wrapper import MCPServerWrapper
 
 
 class Chat:
-    def __init__(self, client: ollama.Client, tools: dict, model_name='llama3.2'):
+    def __init__(self, client: ollama.Client, tools: Dict[str, ollama.Tool], tool_callables: Dict[str, Callable], model_name='llama3.2'):
         self.client = client
         self.tools = tools
         self.model_name = model_name
+        self.tool_callables = tool_callables
         self.messages = []
+        for tool_name, tool in tools.items():
+            assert tool_name == tool.function.name, f"Tool name mismatch: {tool_name} != {tool.name}"
 
     @staticmethod
     async def create(servers: MCPServerWrapper, model_name='llama3.2'):
         client = ollama.Client(host='host.docker.internal')
         tools_by_name = await servers.tool_dict()
-        return Chat(client=client, tools=tools_by_name, model_name=model_name)
+        tool_callables = await servers.tool_callables()
+        return Chat(client=client, tools=tools_by_name, tool_callables=tool_callables, model_name=model_name)
 
-    def tools_list(self):
+    def tools_list(self) -> List[ollama.Tool]:
         return list(self.tools.values())
 
     def get_next_response(self, prompt):
@@ -35,8 +41,10 @@ class Chat:
         if response.message.tool_calls:
             for tool in response.message.tool_calls:
                 if tool.function.name not in self.tools:
+                    print('Tool not found:', tool.function.name)
+                    self.messages.append(Message(role='tool', content=f"Tool {tool.function.name} not found."))
                     raise ValueError(f"Tool {tool.function.name} not found")
-                tool_function = self.tools[tool.function.name]
+                tool_function = self.tool_callables[tool.function.name]
                 arguments = tool.function.arguments
                 print('Calling tool:', tool.function.name, 'with arguments:', arguments)
                 tool_response = await tool_function(**arguments)

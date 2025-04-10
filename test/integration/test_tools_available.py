@@ -21,6 +21,15 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             del tools_by_name
         await asyncio.sleep(0.5)
 
+    async def test_tool_info_available(self):
+        async with self.servers:
+            tools_by_name = await self.servers.tool_dict()
+            tool = tools_by_name['playwright_navigate']
+            assert tool.function.name == 'playwright_navigate'
+            assert 'URL' in tool.function.description
+            assert 'url' in tool.function.parameters.properties
+            assert 'URL' in tool.function.parameters.properties['url'].description
+
     async def test_navigate_and_save_pdf(self):
         assert os.environ['DISPLAY'] == 'host.docker.internal:0.0', os.environ['DISPLAY']
         async with self.servers:
@@ -57,6 +66,8 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
         async with self.servers:
             chat = await Chat.create(self.servers)
             response = chat.get_next_response(prompt)
+            await chat.process_response(response)
+            response = chat.get_next_response('What is 7 + 4?')
             await chat.process_response(response)
             await asyncio.sleep(1)
         await asyncio.sleep(1)

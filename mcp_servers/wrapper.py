@@ -2,6 +2,7 @@ import asyncio
 import functools
 from typing import Dict, Callable
 
+import ollama
 from mcp.server import FastMCP
 from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata
 
@@ -57,7 +58,20 @@ class MCPServerWrapper:
             added_tool.fn_metadata = FuncMetadata(arg_model=arguments_model)
         return result
 
-    async def tool_dict(self) -> Dict[str, Callable]:
+    async def tool_dict(self) -> Dict[str, ollama.Tool]:
+        tools = await self.wrapped_servers.list_available_mcp_tools()
+        result = {}
+        for tool in tools:
+            result[tool.name] = ollama.Tool(
+                function=ollama.Tool.Function(
+                    name=tool.name,
+                    description=tool.description,
+                    parameters=tool.inputSchema,
+                )
+            )
+        return result
+
+    async def tool_callables(self) -> Dict[str, Callable]:
         tools = await self.wrapped_servers.list_available_mcp_tools()
         result = {}
         for tool in tools:
