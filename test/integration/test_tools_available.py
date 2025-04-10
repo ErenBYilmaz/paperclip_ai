@@ -81,6 +81,23 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 
+    async def test_automatically_grabbing_example_html(self):
+        # prompt = 'Get the background color of the body at example.com. You will probably find it in the visible html when you have navigated to that page.'
+        prompt = ('Hello. Get the visible html of the currently opened page in playwright using the tool "playwright_get_visible_html". '
+                  'Then open "example.com" using "playwright_navigate" and grab the html from there as well. '
+                  'Check if you find the background color of the body in the html and report back to me.')
+
+        async with self.servers:
+            chat = await Chat.create(self.servers, model_name='mistral-nemo')
+            chat.add_system_message('You are a helpful assistant that can use tools to interact with the web. '
+                                    'You use the chat history and the provided tools to get the information you need. '
+                                    'You can do simple math, but you are not a calculator. ')
+            await chat.interaction(prompt)
+            last_message = chat.messages[-1]
+            self.assertIn('#f0f0f2', last_message.content)
+            await asyncio.sleep(1)
+        await asyncio.sleep(1)
+
     async def test_model_can_access_previous_messages(self):
         async with self.no_servers:
             chat = await Chat.create(self.no_servers)

@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict, Callable, Optional
 
 import ollama
@@ -13,7 +14,7 @@ class Chat:
         self.tools = tools
         self.model_name = model_name
         self.tool_callables = tool_callables
-        self.messages = []
+        self.messages: List[ollama.Message] = []
         for tool_name, tool in tools.items():
             assert tool_name == tool.function.name, f"Tool name mismatch: {tool_name} != {tool.name}"
 
@@ -28,7 +29,7 @@ class Chat:
         return list(self.tools.values())
 
     def add_system_message(self, prompt):
-        self.messages.append({'role': 'system', 'content': prompt})
+        self.messages.append(Message(role='system', content=prompt))
         print('System message added:', prompt)
 
     def add_tools_system_message(self):
@@ -38,16 +39,28 @@ class Chat:
             tools_description += f'  -> {tool_name} arguments: {tool.function.parameters.model_dump_json()}\n'
         self.add_system_message(prompt=tools_description)
 
-
     def get_next_response(self, prompt: Optional[str]):
-        if prompt is not None:
+        if prompt is None:
+            print('Asking for model output...')
+        else:
             print('Sending prompt:', prompt)
             self.messages.append(ollama.Message(role='user', content=prompt))
         return self.client.chat(
             self.model_name,
             messages=self.messages,
-            tools=self.tools_list()
+            tools=self.tools_list(),
+            options=ollama.Options(temperature=0)
         )
+
+    async def interaction(self, prompt: str, auto_send_back_tool_results=True):
+        response = self.get_next_response(prompt)
+        await self.process_response(response)
+        if auto_send_back_tool_results:
+            while response.message.tool_calls and len(response.message.tool_calls) > 0:
+                if os.path.isfile('stop.dat'):
+                    break
+                response = self.get_next_response(None)
+                await self.process_response(response)
 
     async def process_response(self, response: ollama.ChatResponse):
         print('Chat message received:', response.message.content)
