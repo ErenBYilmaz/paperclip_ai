@@ -184,7 +184,7 @@ class OpenAIChat(Chat):
         self.model_name = model_name
 
     @staticmethod
-    async def create(servers: MCPServerWrapper, model_name='llama3.2'):
+    async def create(servers: MCPServerWrapper, model_name='gpt-4o'):
         client = OpenAI()
         tools_by_name = await servers.tool_dict()
         tool_callables = await servers.tool_callables()
@@ -197,6 +197,20 @@ class OpenAIChat(Chat):
             tools=self.openai_formatted_tools(),
         )
         return self.message_from_openai_response(response)
+
+    def openai_formatted_tools(self) -> List[openai.types.responses.FunctionToolParam]:
+        tools = []
+        for tool_name, tool in self.tools.items():
+            tools.append(
+                openai.types.responses.FunctionToolParam(
+                    name=tool_name,
+                    description=tool.function.description,
+                    parameters=tool.function.parameters.model_dump(),
+                    type="function",
+                    strict=False,
+                )
+            )
+        return tools
 
     def message_from_openai_response(self, response) -> ChatMessage:
         tool_calls: List[ollama.Message.ToolCall] = []
@@ -219,7 +233,7 @@ class OpenAIChat(Chat):
         )
 
     def formatted_input_messages(self) -> openai.types.responses.ResponseInputParam:
-        messages = openai.types.responses.ResponseInputParam()
+        messages = []
         for m in self.messages:
             openai_message: openai.types.responses.ResponseInputItemParam
             if m.role == 'developer':

@@ -5,7 +5,7 @@ import unittest
 import mcp_servers
 from callback import RemoveInvisibleHTML
 from chat_message import create_tool_call_object
-from frontend_v3 import Chat
+from frontend_v3 import Chat, OpenAIChat
 from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
 from test.resources import example_savegame_8_clips
@@ -126,7 +126,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
                   'Then check the new html of the page and report how many paperclips we have available now.')
 
         async with self.servers:
-            chat = await Chat.create(self.servers, model_name='mistral-nemo')
+            chat = await OpenAIChat.create(self.servers, model_name='gpt-4o')
             chat.callbacks.append(RemoveInvisibleHTML())
             await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_navigate', arguments={"url": "https://www.decisionproblem.com/paperclips/index2.html", "browserType": "chromium"}))
             await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_get_visible_html', arguments={}))

@@ -15,6 +15,7 @@ services:
     environment:
       VNC_PASSWORD_FILE: /run/secrets/vnc_password
       DISPLAY: host.docker.internal:0.0
+    env_file: openai.env
     user: "197609:197121"
     ipc: host
     volumes:

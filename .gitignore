@@ -4,3 +4,4 @@ docker/secrets
 logs
 screenshots
 open-webui
+openai.env
