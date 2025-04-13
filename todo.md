@@ -6,8 +6,9 @@
 - [ ] write how it works in README
 - ~~[ ] switch to epiphany: https://www.youtube.com/watch?v=KNhE4l-4aTc~~
 - [ ] combine MCPServerWrapper and MCPServerStack into one class
-- [ ] fix data format of tools in chat.client.chat
-- [ ] send message history with subsequent messages
+- [x] fix data format of tools in chat.client.chat
+- [x] send message history with subsequent messages
 - [ ] full auto with possibility to interrupt
 - [ ] saving and resuming progress
-- [ ] Check https://www.youtube.com/watch?v=1Wen70lzX-8
+- [x] Check https://www.youtube.com/watch?v=1Wen70lzX-8
+- [ ] Openai streaming
