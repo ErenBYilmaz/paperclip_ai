@@ -4,7 +4,8 @@ import unittest
 
 import mcp_servers
 from callback import RemoveInvisibleHTML
-from frontend_v3 import Chat, create_tool_call_object
+from chat_message import create_tool_call_object
+from frontend_v3 import Chat
 from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
 from test.resources import example_savegame_8_clips
@@ -71,14 +72,14 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
                                     'You can do simple math, but you are not a calculator. ')
             response = chat.get_next_response(prompt)
             await chat.process_response(response)
-            self.assertIsNotNone(response.message.tool_calls)
-            assert len(response.message.tool_calls) > 0
+            self.assertIsNotNone(response.tool_calls)
+            assert len(response.tool_calls) > 0
             response = chat.get_next_response('What is the background color of the body of the page we just looked at?')
             await chat.process_response(response)
-            if '#f0f0f2' not in response.message.content:
+            if '#f0f0f2' not in response.content:
                 response = chat.get_next_response(None)  # continue the conversation without a new prompt, but with the tool output
             await chat.process_response(response)
-            self.assertIn('#f0f0f2', response.message.content)
+            self.assertIn('#f0f0f2', response.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)
 
@@ -150,8 +151,8 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             chat = await Chat.create(self.no_servers)
             response = chat.get_next_response('What is 7 + 4?')
             await chat.process_response(response)
-            self.assertIn('11', response.message.content)
+            self.assertIn('11', response.content)
             response = chat.get_next_response('And if you add another 4?')
             await chat.process_response(response)
-            self.assertIn('11', response.message.content)
+            self.assertIn('11', response.content)
         await asyncio.sleep(1)

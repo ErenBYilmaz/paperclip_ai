@@ -27,10 +27,7 @@ class RemoveInvisibleHTML(ChatCallback):
             last_message = chat.messages[-1]
             content = last_message.content
             html_content = '\n'.join(content.splitlines()[2:])
-            # remove any comments
             from lxml import etree
-
-            # print(html_content)
             parser = etree.HTMLParser()
             tree = etree.fromstring(html_content, parser)
 
