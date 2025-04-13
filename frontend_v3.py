@@ -79,10 +79,10 @@ class Chat:
         for step, message in enumerate(self.messages):
             if message.content.strip() != '':
                 lines = message.content.strip().splitlines()
-                if len(lines) <= 3:
+                if len(lines) <= 5:
                     content = '\n'.join(lines)
                 else:
-                    content = '\n'.join(lines[:3]) + '[...]'
+                    content = '\n'.join(lines[:5]) + '[...]'
                 history += f'{step + 1: 3d}. {message.role}: {content}\n'
             if message.tool_calls is not None and len(message.tool_calls) > 0:
                 history += f'{step + 1: 3d}. Tool calls:\n'
@@ -93,28 +93,29 @@ class Chat:
     async def process_response(self, message: ChatMessage):
         print('Chat message received:', message.content)
         self.messages.append(message)
-        any_tool_missing = False
+        missing_tools_for_calls = []
         if message.tool_calls:
             for tool in message.tool_calls:
                 if tool.function.name not in self.tools:
                     print('Tool not found:', tool.function.name)
-                    self.messages.append(ChatMessage(role='tool', content=f"Tool {tool.function.name} not available."))
-                    any_tool_missing = True
+                    self.messages.append(ChatMessage(role='tool', content=f"Tool {tool.function.name} not available.", call_id=tool.call_id))
+                    missing_tools_for_calls.append(tool.call_id)
                     continue
                 await self.call_tool_and_add_output_message(tool)
-        if any_tool_missing:
-            self.messages.append(ChatMessage(role='tool', content=f'Reminder: you only have the following tools available: {list(self.tools.keys())}'))
+        if len(missing_tools_for_calls) > 0:
+            self.messages.append(ChatMessage(role='tool',
+                                             content=f'Reminder: you only have the following tools available: {list(self.tools.keys())}',
+                                             call_id=missing_tools_for_calls[-1]))
 
     async def call_tool_and_add_output_message(self, tool: ChatMessage.ToolCall):
         tool_function = self.tool_callables[tool.function.name]
         arguments = tool.function.arguments
         print('Calling tool:', tool.function.name, 'with arguments:', arguments)
         tool_response = await tool_function(**arguments)
-        print('Tool response:', tool_response)
-        self.messages.append(ChatMessage(role='tool',
-                                         content=f'{tool.function.name}:\n{self.tool_response_to_text(tool_response)}',
-                                         call_id=tool.call_id))
+        msg = ChatMessage(role='tool', content=f'{tool.function.name}:\n{self.tool_response_to_text(tool_response)}', call_id=tool.call_id)
+        self.messages.append(msg)
         await self.after_tool_call(tool, tool_response)
+        print('Tool response:', msg.content)
 
     async def after_tool_call(self, tool: ollama.Message.ToolCall, tool_response):
         for c in self.callbacks:
@@ -231,9 +232,10 @@ class OpenAIChat(Chat):
                     type="message",
                 ))
             elif m.role == 'tool':
+                assert m.call_id is not None
                 messages.append(openai.types.responses.response_input_item_param.FunctionCallOutput(
                     output=m.content,
-                    call_id=...,
+                    call_id=m.call_id,
                     status="completed",
                     type='function_call_output'
                 ))
@@ -242,7 +244,7 @@ class OpenAIChat(Chat):
                     messages.append(openai.types.responses.response_function_tool_call_param.ResponseFunctionToolCallParam(
                         type="function_call",
                         status="completed",
-                        call_id=...,
+                        call_id=t.call_id,
                         name=t.function.name,
                         arguments=json.dumps(t.function.arguments),
                     ))

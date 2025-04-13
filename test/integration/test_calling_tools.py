@@ -127,6 +127,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
 
         async with self.servers:
             chat = await Chat.create(self.servers, model_name='mistral-nemo')
+            chat.callbacks.append(RemoveInvisibleHTML())
             await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_navigate', arguments={"url": "https://www.decisionproblem.com/paperclips/index2.html", "browserType": "chromium"}))
             await chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_get_visible_html', arguments={}))
             javascript_call_for_restoring_savegame = f's = JSON.parse({example_savegame_8_clips});' + 'for (const key in s){localStorage.setItem(key, s[key])};load()'
@@ -136,7 +137,6 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
                                or 'assert' in t.function.name
                                or 'expect' in t.function.name]
                               + ['playwright_get', 'playwright_post', 'playwright_put', 'playwright_delete', 'playwright_patch', 'playwright_evaluate'])
-            chat.callbacks.append(RemoveInvisibleHTML())
             chat.messages.clear()
             chat.print_tools()
             await chat.interaction(prompt)

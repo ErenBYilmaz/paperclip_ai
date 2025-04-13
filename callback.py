@@ -1,3 +1,4 @@
+import re
 import typing
 
 import ollama
@@ -43,4 +44,5 @@ class RemoveInvisibleHTML(ChatCallback):
                     p = element.getparent()
                     p.remove(element)
             html_content = etree.tostring(tree, encoding='unicode', method='html')
-            last_message.content = html_content
+            html_content = re.sub(r'\s*\n\s*', '\n', html_content)
+            last_message.content ="Html content:\n```html\n" + html_content + "\n```"
