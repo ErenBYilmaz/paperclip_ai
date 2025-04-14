@@ -71,10 +71,10 @@ class TestPlayingTheGame(unittest.IsolatedAsyncioTestCase):
 
     async def test_playing_the_game(self):
         agent = self.agent
+        save_path = 'test_save.json'
         async with agent:
             await agent.setup()
-            if os.path.isfile('test_save.json'):
-                await agent.restore_game('savegame.json')
-            await agent.chat.interaction(agent.initial_prompt())
-            await agent.chat.interaction('Continue making paperclips.')
-            await agent.save_game(await agent.get_game_state_json(), 'test_save.json')
+            if os.path.isfile(save_path):
+                await agent.restore_game(save_path)
+            await agent.chat.interaction(agent.initial_prompt(), max_steps=5)
+            await agent.save_game(await agent.get_game_state_json(), save_path)

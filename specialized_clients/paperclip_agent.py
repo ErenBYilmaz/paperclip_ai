@@ -35,6 +35,8 @@ class PaperclipAgent:
             'I have already opened the web browser for you and you can have a look by collecting the html contents.\n'
             'You are now in charge of the game: Try to make as many paperclips as possible.\n'
             'This involves resource management, button clicking, and incremental game progression.\n'
+            'You are not allowed to modify the game state using javascript, e.g. enabling or disabling buttons.\n'
+            'You are however allowed to use javascript for things that you could also have done without it, for example clicking a button multiple times or reading the state of a text field.\n'
             'I have put you in a testing scenario where you can\'t really break things, so feel free to experiment and try to find out how the game works.\n'
         )
 
@@ -57,7 +59,7 @@ class PaperclipAgent:
 
     async def restore_game(self, save_path):
         javascript_call_for_restoring_savegame = f's = JSON.parse({json.dumps(self.load_game(save_path))});' + 'for (const key in s){localStorage.setItem(key, s[key])};load()'
-        await self.chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_evaluate', arguments={"script": javascript_call_for_restoring_savegame}))
+        await self.chat.call_tool(create_tool_call_object(name='playwright_evaluate', arguments={"script": javascript_call_for_restoring_savegame}))
 
     async def create_chat(self):
         raise NotImplementedError('abstract method')
