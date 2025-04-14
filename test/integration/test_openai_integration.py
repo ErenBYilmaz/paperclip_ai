@@ -22,7 +22,7 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
         print(models)
         assert len(models) > 0
 
-    async def test_making_a_few_paperclips(self):
+    async def test_making_a_paperclip(self):
         prompt = ('Hello. We are playing the browsergame "Universal Paperclips"! '
                   'I have already opened the web browser for you and collected the html contents. '
                   'Get the visible html and click the paperclip-making button. '
@@ -49,3 +49,4 @@ class TestTools(unittest.IsolatedAsyncioTestCase):
             self.assertIn('9', last_message.content)
             await asyncio.sleep(1)
         await asyncio.sleep(1)
+

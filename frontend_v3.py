@@ -38,11 +38,8 @@ class Chat:
         self.messages.append(ChatMessage(role='system', content=prompt))
         print('System message added:', prompt)
 
-    def add_tools_system_message(self):
-        self.add_system_message(prompt=(self.tools_description()))
-
     def tools_description(self):
-        tools_description = 'You have the following tools available:\n'
+        tools_description = 'Available tools:\n'
         for tool_name, tool in self.tools.items():
             tools_description += f"- {tool_name}: {tool.function.description}\n"
             tools_description += f'  -> {tool_name} arguments: {tool.function.parameters.model_dump_json()}\n'
@@ -108,14 +105,18 @@ class Chat:
                                              call_id=missing_tools_for_calls[-1]))
 
     async def call_tool_and_add_output_message(self, tool: ChatMessage.ToolCall):
-        tool_function = self.tool_callables[tool.function.name]
-        arguments = tool.function.arguments
-        print('Calling tool:', tool.function.name, 'with arguments:', arguments)
-        tool_response = await tool_function(**arguments)
+        tool_response = await self.call_tool(tool)
         msg = ChatMessage(role='tool', content=f'{tool.function.name}:\n{self.tool_response_to_text(tool_response)}', call_id=tool.call_id)
         self.messages.append(msg)
         await self.after_tool_call(tool, tool_response)
         print('Tool response:', msg.content)
+
+    async def call_tool(self, tool: ChatMessage.ToolCall):
+        tool_function = self.tool_callables[tool.function.name]
+        arguments = tool.function.arguments
+        print('Calling tool:', tool.function.name, 'with arguments:', arguments)
+        tool_response = await tool_function(**arguments)
+        return tool_response
 
     async def after_tool_call(self, tool: ollama.Message.ToolCall, tool_response):
         for c in self.callbacks:
@@ -131,14 +132,15 @@ class Chat:
 
     def tool_response_to_text(self, tool_response) -> str:
         if isinstance(tool_response, CallToolResult):
+            output_texts = []
             for response_content in tool_response.content:
                 if isinstance(response_content, TextContent):
-                    t = response_content.text
+                    output_texts.append(response_content.text)
                     if response_content.annotations is not None:
                         raise NotImplementedError('TO DO')
-                    return t
                 else:
                     raise NotImplementedError(f'TO DO: Implement processing {type(response_content)}')
+            return '\n'.join(output_texts)
         elif isinstance(tool_response, (int, float, bool)):
             return str(tool_response)
         elif isinstance(tool_response, str):
@@ -148,7 +150,7 @@ class Chat:
 
 
 class OllamaChat(Chat):
-    def __init__(self, client: ollama.Client, tools: Dict[str, ollama.Tool], tool_callables: Dict[str, Callable], model_name='llama3.2', callbacks: List[ChatCallback] = None):
+    def __init__(self, client: ollama.Client, tools: Dict[str, ollama.Tool], tool_callables: Dict[str, Callable], model_name='mistral-nemo', callbacks: List[ChatCallback] = None):
         super().__init__(tools, tool_callables, callbacks)
         self.client = client
         self.model_name = model_name
@@ -200,10 +202,10 @@ class OpenAIChat(Chat):
 
     def openai_formatted_tools(self) -> List[openai.types.responses.FunctionToolParam]:
         tools = []
-        for tool_name, tool in self.tools.items():
+        for tool in self.tools_list():
             tools.append(
                 openai.types.responses.FunctionToolParam(
-                    name=tool_name,
+                    name=tool.function.name,
                     description=tool.function.description,
                     parameters=tool.function.parameters.model_dump(),
                     type="function",

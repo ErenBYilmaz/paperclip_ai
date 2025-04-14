@@ -9,6 +9,6 @@
 - [x] fix data format of tools in chat.client.chat
 - [x] send message history with subsequent messages
 - [ ] full auto with possibility to interrupt
-- [ ] saving and resuming progress
+- [x] saving and resuming progress
 - [x] Check https://www.youtube.com/watch?v=1Wen70lzX-8
-- [ ] Openai streaming
+- [ ] Openai streaming 

@@ -5,3 +5,4 @@ logs
 screenshots
 open-webui
 openai.env
+test*.json
