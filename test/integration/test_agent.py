@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import unittest
 
 from specialized_clients.paperclip_agent import OpenAIPaperclipAgent, OllamaPaperclipAgent
@@ -62,3 +63,18 @@ class TestAgent(unittest.IsolatedAsyncioTestCase):
             loaded_game = json.loads(loaded_data['saveGame'])
             for key in ["clips", 'unusedClips', 'clipRate']:
                 self.assertEqual(initial_game[key], loaded_game[key])
+
+
+class TestPlayingTheGame(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.agent = OpenAIPaperclipAgent()
+
+    async def test_playing_the_game(self):
+        agent = self.agent
+        async with agent:
+            await agent.setup()
+            if os.path.isfile('test_save.json'):
+                await agent.restore_game('savegame.json')
+            await agent.chat.interaction(agent.initial_prompt())
+            await agent.chat.interaction('Continue making paperclips.')
+            await agent.save_game(await agent.get_game_state_json(), 'test_save.json')

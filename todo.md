@@ -10,5 +10,6 @@
 - [x] send message history with subsequent messages
 - [ ] full auto with possibility to interrupt
 - [x] saving and resuming progress
+- [ ] saving and resuming chat history
 - [x] Check https://www.youtube.com/watch?v=1Wen70lzX-8
 - [ ] Openai streaming 

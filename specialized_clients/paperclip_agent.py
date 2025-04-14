@@ -34,13 +34,10 @@ class PaperclipAgent:
             'Hello. We are playing the browsergame "Universal Paperclips"!\n'
             'I have already opened the web browser for you and you can have a look by collecting the html contents.\n'
             'You are now in charge of the game: Try to make as many paperclips as possible.\n'
+            'This involves resource management, button clicking, and incremental game progression.\n'
             'I have put you in a testing scenario where you can\'t really break things, so feel free to experiment and try to find out how the game works.\n'
         )
 
-    async def run(self):
-        if self.chat is None:
-            raise RuntimeError('Chat not initialized. Call setup() first.')
-        await self.chat.interaction(self.initial_prompt())
 
     async def setup(self, save_path=None):
         self.chat = await self.create_chat()
