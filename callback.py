@@ -9,7 +9,10 @@ if typing.TYPE_CHECKING:
 
 class ChatCallback:
     async def after_tool_call(self, chat: 'Chat', tool: ollama.Message.ToolCall, tool_response):
-        raise NotImplementedError('Abstract method')
+        pass
+
+    async def on_continuation(self, chat: 'Chat'):
+        pass
 
 
 class AfterToolCallAnotherTool(ChatCallback):
@@ -45,4 +48,4 @@ class RemoveInvisibleHTML(ChatCallback):
                     p.remove(element)
             html_content = etree.tostring(tree, encoding='unicode', method='html')
             html_content = re.sub(r'\s*\n\s*', '\n', html_content)
-            last_message.content ="Html content:\n```html\n" + html_content + "\n```"
+            last_message.content = "Html content:\n```html\n" + html_content + "\n```"

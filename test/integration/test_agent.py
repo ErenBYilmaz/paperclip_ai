@@ -15,7 +15,7 @@ class TestAgent(unittest.IsolatedAsyncioTestCase):
                   'Get the visible html and click the paperclip-making button. '
                   'Then check the new html of the page and report how many paperclips we have available now.')
         async with agent:
-            await agent.setup()
+            await agent.setup(json.loads(example_savegame_8_clips_json))
             await agent.chat.interaction(prompt)
             chat = agent.chat
             print(chat.history_str())
@@ -29,7 +29,7 @@ class TestAgent(unittest.IsolatedAsyncioTestCase):
                   'I have already opened the web browser for you. '
                   'Get the visible html and check how many paperclips we have available.')
         async with agent:
-            await agent.setup()
+            await agent.setup(json.loads(example_savegame_8_clips_json))
             await agent.chat.interaction(prompt)
             chat = agent.chat
             print(chat.history_str())
@@ -83,7 +83,6 @@ class TestPlayingTheGame(unittest.IsolatedAsyncioTestCase):
 class TestPlayingTheGameWithOllama(TestPlayingTheGame):
     def setUp(self):
         self.agent = OllamaPaperclipAgent(model_name='mistral-nemo')
-        self.max_steps = 10
 
     async def test_playing_the_game(self):
         save_path = 'test_save.json'
@@ -91,10 +90,18 @@ class TestPlayingTheGameWithOllama(TestPlayingTheGame):
             await self.agent.setup()
             if os.path.isfile(save_path):
                 await self.agent.restore_game(save_path)
-            await self.agent.chat.interaction(self.agent.initial_prompt(), max_steps=self.max_steps)
+            await self.agent.chat.interaction(self.agent.initial_prompt(), max_steps=10, prompt_continuation=True)
             await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
-            await self.agent.chat.interaction('Please continue.', max_steps=self.max_steps)
+            await self.agent.chat.interaction('Please continue.', max_steps=10)
             await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
-            await self.agent.chat.interaction('Please continue.', max_steps=self.max_steps)
+            await self.agent.chat.interaction('Please continue.', max_steps=10)
             await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
+            print(self.agent.chat.history_str())
+
+    async def test_looping_interactions(self):
+        save_path = 'test_save.json'
+        async with self.agent:
+            await self.agent.setup(save_path)
+            await self.agent.chat.interaction(self.agent.initial_prompt(), max_steps=20, prompt_continuation=True)
+            print()
             print(self.agent.chat.history_str())

@@ -56,12 +56,18 @@ class Chat:
     def api_call_for_model_response(self) -> ChatMessage:
         raise NotImplementedError('Abstract method')
 
-    async def interaction(self, prompt: str, auto_send_back_tool_results=True, max_steps=10):
+    async def interaction(self, prompt: str, auto_send_back_tool_results=True, max_steps=10, prompt_continuation=False):
         response = self.get_next_response(prompt)
         await self.process_response(response)
         steps = 0
         if auto_send_back_tool_results:
-            while response.tool_calls and len(response.tool_calls) > 0:
+            while True:
+                if response.tool_calls is None or len(response.tool_calls) == 0:
+                    if prompt_continuation:
+                        await self.on_continuation()
+                        self.get_next_response('Please continue.')
+                    else:
+                        break
                 if os.path.isfile('stop.dat'):
                     break
                 response = self.get_next_response(None)
@@ -125,6 +131,10 @@ class Chat:
     async def after_tool_call(self, tool: ollama.Message.ToolCall, tool_response):
         for c in self.callbacks:
             await c.after_tool_call(self, tool, tool_response)
+
+    async def on_continuation(self):
+        for c in self.callbacks:
+            await c.on_continuation(self)
 
     def print_tools(self):
         print(self.tools_description())

@@ -59,17 +59,7 @@ class MCPServerWrapper:
         return result
 
     async def tool_dict(self) -> Dict[str, ollama.Tool]:
-        tools = await self.wrapped_servers.list_available_mcp_tools()
-        result = {}
-        for tool in tools:
-            result[tool.name] = ollama.Tool(
-                function=ollama.Tool.Function(
-                    name=tool.name,
-                    description=tool.description,
-                    parameters=tool.inputSchema,
-                )
-            )
-        return result
+        return await self.wrapped_servers.tool_dict()
 
     async def tool_callables(self) -> Dict[str, Callable]:
         tools = await self.wrapped_servers.list_available_mcp_tools()

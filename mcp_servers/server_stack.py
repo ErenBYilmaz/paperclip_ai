@@ -3,6 +3,7 @@ import json
 import os.path
 from typing import List, Union, Dict
 
+import ollama
 from agents.mcp import MCPServerStdio, MCPServerSse
 
 
@@ -91,6 +92,19 @@ class MCPServerStack:
         assert len(servers) == 1
         server = servers[0]
         return server
+
+    async def tool_dict(self) -> Dict[str, ollama.Tool]:
+        tools = await self.list_available_mcp_tools()
+        result = {}
+        for tool in tools:
+            result[tool.name] = ollama.Tool(
+                function=ollama.Tool.Function(
+                    name=tool.name,
+                    description=tool.description,
+                    parameters=tool.inputSchema,
+                )
+            )
+        return result
 
 
 def main():

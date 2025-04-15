@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Optional
+from typing import Optional, Union
 
 import mcp_servers
 from callback import RemoveInvisibleHTML
@@ -8,6 +8,7 @@ from chat_message import create_tool_call_object
 from frontend_v3 import OpenAIChat, Chat, OllamaChat
 from mcp_servers.server_stack import MCPServerStack
 from mcp_servers.wrapper import MCPServerWrapper
+from specialized_clients.paperclip_callbacks import SaveOnContinuation
 from test.resources import example_savegame_8_clips
 
 
@@ -34,31 +35,37 @@ class PaperclipAgent:
             'Hello. We are playing the browsergame "Universal Paperclips"!\n'
             'I have already opened the web browser for you and you can have a look by collecting the html contents.\n'
             'You are now in charge of the game: Try to make as many paperclips as possible.\n'
-            'This involves resource management, button clicking, and incremental game progression.\n'
+            'This involves resource management, button clicking, and incrementally unlocking new game features.\n'
+            'You are encouraged to use the tools I provided to play with the game.\n'
             'You are not allowed to modify the game state using javascript, e.g. enabling or disabling buttons.\n'
             'You are however allowed to use javascript for things that you could also have done without it, for example clicking a button multiple times or reading the state of a text field.\n'
             'I have put you in a testing scenario where you can\'t really break things, so feel free to experiment and try to find out how the game works.\n'
         )
 
-
-    async def setup(self, save_path=None):
+    async def setup(self, save: Union[str, dict] = None):
         self.chat = await self.create_chat()
         self.chat.callbacks.append(RemoveInvisibleHTML())
+        if isinstance(save, str):
+            self.chat.callbacks.append(SaveOnContinuation(self, save))
         await self.chat.call_tool_and_add_output_message(
             create_tool_call_object(name='playwright_navigate', arguments={"url": "https://www.decisionproblem.com/paperclips/index2.html", "browserType": "chromium"}))
         await self.chat.call_tool_and_add_output_message(create_tool_call_object(name='playwright_get_visible_html', arguments={}))
-        if save_path is not None:
-            await self.restore_game(save_path)
+        if save is not None:
+            await self.restore_game(save)
         self.chat.remove_tools([t.function.name for t in self.chat.tools_list()
                                 if 'codegen' in t.function.name
                                 or 'assert' in t.function.name
                                 or 'expect' in t.function.name]
-                               + ['playwright_get', 'playwright_post', 'playwright_put', 'playwright_delete', 'playwright_patch'])
+                               + ['playwright_get', 'playwright_post', 'playwright_put', 'playwright_delete', 'playwright_patch', 'playwright_get_visible_text', 'playwright_console_logs'])
         self.chat.messages.clear()
         self.chat.print_tools()
 
-    async def restore_game(self, save_path):
-        javascript_call_for_restoring_savegame = f's = JSON.parse({json.dumps(self.load_game(save_path))});' + 'for (const key in s){localStorage.setItem(key, s[key])};load()'
+    async def restore_game(self, save: Union[str, dict]):
+        if isinstance(save, str):
+            save = self.load_game(save)
+        elif isinstance(save, dict):
+            save = json.dumps(save)
+        javascript_call_for_restoring_savegame = f's = JSON.parse({json.dumps(save)});' + 'for (const key in s){localStorage.setItem(key, s[key])};load()'
         await self.chat.call_tool(create_tool_call_object(name='playwright_evaluate', arguments={"script": javascript_call_for_restoring_savegame}))
 
     async def create_chat(self):
