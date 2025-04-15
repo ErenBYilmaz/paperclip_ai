@@ -68,13 +68,33 @@ class TestAgent(unittest.IsolatedAsyncioTestCase):
 class TestPlayingTheGame(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.agent = OpenAIPaperclipAgent()
+        self.max_steps = 5
 
     async def test_playing_the_game(self):
-        agent = self.agent
         save_path = 'test_save.json'
-        async with agent:
-            await agent.setup()
+        async with self.agent:
+            await self.agent.setup()
             if os.path.isfile(save_path):
-                await agent.restore_game(save_path)
-            await agent.chat.interaction(agent.initial_prompt(), max_steps=5)
-            await agent.save_game(await agent.get_game_state_json(), save_path)
+                await self.agent.restore_game(save_path)
+            await self.agent.chat.interaction(self.agent.initial_prompt(), max_steps=self.max_steps)
+            await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
+
+
+class TestPlayingTheGameWithOllama(TestPlayingTheGame):
+    def setUp(self):
+        self.agent = OllamaPaperclipAgent(model_name='mistral-nemo')
+        self.max_steps = 10
+
+    async def test_playing_the_game(self):
+        save_path = 'test_save.json'
+        async with self.agent:
+            await self.agent.setup()
+            if os.path.isfile(save_path):
+                await self.agent.restore_game(save_path)
+            await self.agent.chat.interaction(self.agent.initial_prompt(), max_steps=self.max_steps)
+            await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
+            await self.agent.chat.interaction('Please continue.', max_steps=self.max_steps)
+            await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
+            await self.agent.chat.interaction('Please continue.', max_steps=self.max_steps)
+            await self.agent.save_game(await self.agent.get_game_state_json(), save_path)
+            print(self.agent.chat.history_str())

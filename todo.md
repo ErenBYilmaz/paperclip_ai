@@ -12,4 +12,7 @@
 - [x] saving and resuming progress
 - [ ] saving and resuming chat history
 - [x] Check https://www.youtube.com/watch?v=1Wen70lzX-8
+- [ ] Fancy logging
+
+# Low priority
 - [ ] Openai streaming 

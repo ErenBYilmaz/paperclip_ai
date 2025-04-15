@@ -75,17 +75,21 @@ class Chat:
         history = ''
         for step, message in enumerate(self.messages):
             if message.content.strip() != '':
-                lines = message.content.strip().splitlines()
-                if len(lines) <= 5:
-                    content = '\n'.join(lines)
-                else:
-                    content = '\n'.join(lines[:5]) + '[...]'
+                content = self.short_message_content(message.content)
                 history += f'{step + 1: 3d}. {message.role}: {content}\n'
             if message.tool_calls is not None and len(message.tool_calls) > 0:
                 history += f'{step + 1: 3d}. Tool calls:\n'
                 for tool_call in message.tool_calls:
                     history += f'    - {tool_call.function.name}({tool_call.function.arguments})\n'
         return history
+
+    def short_message_content(self, message_content: str):
+        lines = message_content.strip().splitlines()
+        if len(lines) <= 5:
+            content = '\n'.join(lines)
+        else:
+            content = '\n'.join(lines[:5]) + '[...]'
+        return content
 
     async def process_response(self, message: ChatMessage):
         print('Chat message received:', message.content)
@@ -109,7 +113,7 @@ class Chat:
         msg = ChatMessage(role='tool', content=f'{tool.function.name}:\n{self.tool_response_to_text(tool_response)}', call_id=tool.call_id)
         self.messages.append(msg)
         await self.after_tool_call(tool, tool_response)
-        print('Tool response:', msg.content)
+        print('Tool response:', self.short_message_content(msg.content))
 
     async def call_tool(self, tool: ChatMessage.ToolCall):
         tool_function = self.tool_callables[tool.function.name]
@@ -175,7 +179,11 @@ class OllamaChat(Chat):
             self.model_name,
             messages=self.messages,
             tools=self.tools_list(),
-            options=ollama.Options(temperature=0)
+            options=ollama.Options(
+                temperature=0,
+                repeat_last_n=0,
+                num_ctx=16000,
+            )
         ).message)
 
 
