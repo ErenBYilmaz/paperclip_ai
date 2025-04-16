@@ -7,7 +7,6 @@ services:
       - "3000:8080"
     volumes:
       - ../open-webui:/app/backend/data
-    restart: always
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
